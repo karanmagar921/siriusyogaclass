@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}Booking Confirmed! — Sirius Yoga{% endblock %}
+{% block content %}
+
+<!-- Success Banner -->
+<div style="background:linear-gradient(135deg,#2c3e2d,#1a2a1b);padding:4rem 2rem;text-align:center;color:white;">
+  <div style="font-size:3.5rem;margin-bottom:1rem;">✅</div>
+  <h1 style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:300;margin-bottom:0.5rem;">Booking Confirmed!</h1>
+  <p style="opacity:0.6;font-size:1rem;">Your payment was successful. See you on the mat! 🧘</p>
+</div>
+
+<section class="section" style="padding-top:3rem;">
+  <div class="section-inner" style="max-width:700px;">
+
+    {% for booking in booking_payment_pairs %}
+    {% with payment=booking.1 booking=booking.0 %}
+    <div style="background:white;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:2rem;box-shadow:0 4px 20px rgba(44,44,44,0.08);">
+
+      <!-- Receipt Header -->
+      <div style="background:var(--sage);padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center;">
+        <div style="color:white;">
+          <div style="font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;opacity:0.8;margin-bottom:0.2rem;">Payment Receipt</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:500;">{{ booking.yoga_class.name }}</div>
+        </div>
+        <div style="text-align:right;color:white;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;">
+            A${% if payment %}{{ payment.amount }}{% else %}{{ booking.yoga_class.price }}{% endif %}
+          </div>
+          <div style="font-size:0.75rem;opacity:0.7;">
+            {% if booking.payment_status == 'free' %}Free via Pass{% else %}Paid{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:1.5rem;">
+
+        <!-- Class Details -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+          <div>
+            <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.25rem;">Class</div>
+            <div style="font-weight:500;">{{ booking.yoga_class.name }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.25rem;">Instructor</div>
+            <div style="font-weight:500;">{% if booking.yoga_class.instructor %}{{ booking.yoga_class.instructor.name }}{% else %}TBA{% endif %}</div>
+          </div>
+          <div>
+            <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.25rem;">Date</div>
+            <div style="font-weight:500;">{% if booking.session %}{{ booking.session.date|date:"l, M j, Y" }}{% else %}{{ booking.booking_date|date:"M j, Y" }}{% endif %}</div>
+          </div>
+          <div>
+            <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.25rem;">Time</div>
+            <div style="font-weight:500;">{% if booking.session %}{{ booking.session.start_time|time:"g:i A" }} – {{ booking.session.end_time|time:"g:i A" }}{% else %}—{% endif %}</div>
+          </div>
+        </div>
+
+        <!-- Payment Details -->
+        {% if payment %}
+        <div style="background:var(--cream);border-radius:6px;padding:1rem;margin-bottom:1.25rem;">
+          <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.75rem;">Payment Details</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.35rem;">
+            <span style="color:var(--soft-grey);">Transaction ID</span>
+            <span style="font-family:monospace;font-size:0.82rem;font-weight:500;">{{ payment.transaction_id }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.35rem;">
+            <span style="color:var(--soft-grey);">Date Paid</span>
+            <span>{{ payment.created_at|date:"M j, Y g:i A" }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.35rem;">
+            <span style="color:var(--soft-grey);">Method</span>
+            <span>💳 Card</span>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.6rem;display:flex;justify-content:space-between;font-weight:700;">
+            <span>Amount Paid</span>
+            <span style="color:var(--sage);">A${{ payment.amount }}</span>
+          </div>
+        </div>
+        {% elif booking.payment_status == 'free' %}
+        <div style="background:#e8f5e9;border-radius:6px;padding:1rem;margin-bottom:1.25rem;font-size:0.875rem;color:#2e7d32;">
+          🎫 Paid with membership pass: {{ booking.used_membership.plan.name }}
+        </div>
+        {% endif %}
+
+        <!-- What to Bring -->
+        <div style="background:rgba(122,158,126,0.08);border-left:3px solid var(--sage);padding:1rem;border-radius:0 6px 6px 0;">
+          <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--sage);margin-bottom:0.4rem;">What to Bring</div>
+          <p style="font-size:0.875rem;color:var(--soft-grey);margin:0;line-height:1.7;">{{ booking.yoga_class.what_to_bring }}</p>
+        </div>
+
+        <div style="margin-top:1rem;font-size:0.8rem;color:var(--soft-grey);">
+          📧 A confirmation email and receipt have been sent to <strong>{{ request.user.email }}</strong>
+        </div>
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+
+    <!-- Actions -->
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+      <a href="{% url 'my_bookings' %}" class="btn-primary">View All Bookings</a>
+      <a href="{% url 'classes' %}" class="btn-outline" style="color:var(--charcoal);border-color:var(--border);padding:0.9rem 2rem;">Book Another Class</a>
+    </div>
+
+    <p style="text-align:center;margin-top:1.5rem;font-size:0.875rem;color:var(--soft-grey);">
+      Namaste 🙏 We look forward to seeing you on the mat!
+    </p>
+  </div>
+</section>
+{% endblock %}

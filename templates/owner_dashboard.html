@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Sirius Yoga Admin{% endblock %}
+{% block content %}
+
+<div class="page-header" style="padding:2.5rem 2rem 2rem;">
+  <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <h1 style="margin-bottom:0.2rem;">Studio Dashboard</h1>
+      <p style="margin:0;opacity:0.7;">{{ today|date:"l, F j, Y" }}</p>
+    </div>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+      <a href="{% url 'manage_bookings' %}" class="btn-outline" style="padding:0.6rem 1.25rem;font-size:0.82rem;color:white;border-color:rgba(255,255,255,0.4);">📅 All Bookings</a>
+      <a href="{% url 'manage_payments' %}" class="btn-outline" style="padding:0.6rem 1.25rem;font-size:0.82rem;color:white;border-color:rgba(255,255,255,0.4);">💳 All Payments</a>
+      <a href="{% url 'admin:index' %}" class="btn-outline" style="padding:0.6rem 1.25rem;font-size:0.82rem;color:white;border-color:rgba(255,255,255,0.4);">⚙️ Django Admin</a>
+    </div>
+  </div>
+</div>
+
+<section class="section" style="padding-top:2.5rem;">
+  <div class="section-inner" style="max-width:1100px;">
+
+    <!-- ── Stats Row ── -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:2.5rem;">
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:700;color:var(--sage);">A${{ month_revenue }}</div>
+        <div style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--soft-grey);margin-top:0.25rem;">This Month</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:700;color:var(--charcoal);">A${{ total_revenue }}</div>
+        <div style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--soft-grey);margin-top:0.25rem;">All-Time Revenue</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:700;color:var(--charcoal);">{{ total_bookings }}</div>
+        <div style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--soft-grey);margin-top:0.25rem;">Total Bookings</div>
+        {% if pending_bookings > 0 %}
+        <div style="font-size:0.72rem;color:var(--terracotta);margin-top:0.3rem;">{{ pending_bookings }} pending</div>
+        {% endif %}
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:700;color:var(--charcoal);">{{ total_students }}</div>
+        <div style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--soft-grey);margin-top:0.25rem;">Students</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:700;color:{% if unread_msgs > 0 %}var(--terracotta){% else %}var(--charcoal){% endif %};">{{ unread_msgs }}</div>
+        <div style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--soft-grey);margin-top:0.25rem;">Unread Messages</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:1.25rem;text-align:center;">
+        <div style="font-size:1.8rem;font-weight:700;color:var(--charcoal);">{{ todays_bookings }}</div>
+        <div style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--soft-grey);margin-top:0.25rem;">Today's Bookings</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;">
+
+      <!-- LEFT column -->
+      <div>
+
+        <!-- Today's Sessions -->
+        <div style="background:white;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:1.5rem;">
+          <div style="background:var(--sage);padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:white;font-weight:500;font-size:0.9rem;">📅 Today's Sessions</span>
+            <a href="{% url 'schedule' %}" style="color:rgba(255,255,255,0.7);font-size:0.78rem;text-decoration:none;">Full schedule →</a>
+          </div>
+          {% if todays_sessions %}
+          {% for s in todays_sessions %}
+          <div style="padding:0.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:500;font-size:0.875rem;">{{ s.yoga_class.name }}</div>
+              <div style="font-size:0.75rem;color:var(--soft-grey);">{{ s.start_time|time:"g:i A" }} – {{ s.end_time|time:"g:i A" }}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:0.82rem;font-weight:500;">{{ s.booked }}/{{ s.effective_max }}</div>
+              <div style="font-size:0.72rem;color:var(--soft-grey);">booked</div>
+            </div>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div style="padding:1.5rem;text-align:center;color:var(--soft-grey);font-size:0.875rem;">No sessions today.</div>
+          {% endif %}
+        </div>
+
+        <!-- Upcoming Sessions -->
+        <div style="background:white;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:1.5rem;">
+          <div style="background:var(--charcoal);padding:1rem 1.25rem;">
+            <span style="color:white;font-weight:500;font-size:0.9rem;">📆 Next 7 Days</span>
+          </div>
+          {% if upcoming %}
+          {% for s in upcoming %}
+          <div style="padding:0.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:500;font-size:0.875rem;">{{ s.yoga_class.name }}</div>
+              <div style="font-size:0.75rem;color:var(--soft-grey);">{{ s.date|date:"D, M j" }} · {{ s.start_time|time:"g:i A" }}</div>
+            </div>
+            <span class="avail-badge {% if s.booked >= s.effective_max %}avail-full{% elif s.booked >= s.effective_max|add:'-3' %}avail-low{% else %}avail-open{% endif %}" style="font-size:0.68rem;">{{ s.booked }}/{{ s.effective_max }}</span>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div style="padding:1.5rem;text-align:center;color:var(--soft-grey);font-size:0.875rem;">No upcoming sessions.</div>
+          {% endif %}
+        </div>
+
+        <!-- Contact Messages -->
+        <div style="background:white;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+          <div style="background:#5c3d8f;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:white;font-weight:500;font-size:0.9rem;">✉️ Recent Messages {% if unread_msgs %}<span style="background:var(--terracotta);border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;margin-left:0.4rem;">{{ unread_msgs }}</span>{% endif %}</span>
+            <a href="{% url 'admin:core_contactmessage_changelist' %}" style="color:rgba(255,255,255,0.7);font-size:0.78rem;text-decoration:none;">View all →</a>
+          </div>
+          {% if recent_messages %}
+          {% for msg in recent_messages %}
+          <div style="padding:0.9rem 1.25rem;border-bottom:1px solid var(--border);{% if not msg.is_read %}background:#fffbf0;{% endif %}">
+            <div style="display:flex;justify-content:space-between;margin-bottom:0.2rem;">
+              <span style="font-weight:{% if not msg.is_read %}600{% else %}400{% endif %};font-size:0.875rem;">{{ msg.name }}</span>
+              <span style="font-size:0.72rem;color:var(--soft-grey);">{{ msg.created_at|date:"M j, g:i A" }}</span>
+            </div>
+            <div style="font-size:0.82rem;font-weight:500;color:var(--charcoal);">{{ msg.subject }}</div>
+            <div style="font-size:0.78rem;color:var(--soft-grey);margin-top:0.2rem;">{{ msg.message|truncatechars:60 }}</div>
+            {% if not msg.is_read %}<span style="font-size:0.65rem;background:var(--terracotta);color:white;padding:0.1rem 0.4rem;border-radius:10px;margin-top:0.3rem;display:inline-block;">NEW</span>{% endif %}
+          </div>
+          {% endfor %}
+          {% else %}
+          <div style="padding:1.5rem;text-align:center;color:var(--soft-grey);font-size:0.875rem;">No messages yet.</div>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- RIGHT column -->
+      <div>
+
+        <!-- Recent Payments -->
+        <div style="background:white;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:1.5rem;">
+          <div style="background:#1a5276;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:white;font-weight:500;font-size:0.9rem;">💳 Recent Payments</span>
+            <a href="{% url 'manage_payments' %}" style="color:rgba(255,255,255,0.7);font-size:0.78rem;text-decoration:none;">View all →</a>
+          </div>
+          {% if recent_payments %}
+          {% for p in recent_payments %}
+          <div style="padding:0.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:500;font-size:0.875rem;">{{ p.user.get_full_name|default:p.user.username }}</div>
+              <div style="font-size:0.75rem;color:var(--soft-grey);">
+                {% if p.booking %}{{ p.booking.yoga_class.name }}
+                {% elif p.membership %}{{ p.membership.plan.name }} (Pass)
+                {% endif %} · {{ p.created_at|date:"M j" }}
+              </div>
+            </div>
+            <div style="font-weight:600;color:var(--sage);font-size:1rem;">A${{ p.amount }}</div>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div style="padding:1.5rem;text-align:center;color:var(--soft-grey);font-size:0.875rem;">No payments yet.</div>
+          {% endif %}
+        </div>
+
+        <!-- Recent Bookings -->
+        <div style="background:white;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:1.5rem;">
+          <div style="background:var(--terracotta);padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:white;font-weight:500;font-size:0.9rem;">🎟️ Recent Bookings</span>
+            <a href="{% url 'manage_bookings' %}" style="color:rgba(255,255,255,0.7);font-size:0.78rem;text-decoration:none;">View all →</a>
+          </div>
+          {% if recent_bookings %}
+          {% for b in recent_bookings %}
+          <div style="padding:0.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:500;font-size:0.875rem;">{{ b.user.get_full_name|default:b.user.username }}</div>
+              <div style="font-size:0.75rem;color:var(--soft-grey);">{{ b.yoga_class.name }}{% if b.session %} · {{ b.session.date|date:"M j" }}{% endif %}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem;">
+              <span class="status-badge status-{{ b.status }}" style="font-size:0.68rem;">{{ b.get_status_display }}</span>
+              {% if b.payment_status == 'paid' %}<span style="font-size:0.68rem;color:#2e7d32;">Paid ✅</span>
+              {% elif b.payment_status == 'free' %}<span style="font-size:0.68rem;color:#2e7d32;">Pass 🎫</span>
+              {% else %}<span style="font-size:0.68rem;color:#c62828;">Unpaid</span>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div style="padding:1.5rem;text-align:center;color:var(--soft-grey);font-size:0.875rem;">No bookings yet.</div>
+          {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:1.25rem;">
+          <div style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:1rem;">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            <a href="{% url 'admin:core_classsession_changelist' %}" style="display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.9rem;background:var(--cream);border-radius:4px;text-decoration:none;color:var(--charcoal);font-size:0.875rem;transition:background 0.15s;" onmouseover="this.style.background='#e0e7db'" onmouseout="this.style.background='var(--cream)'">📅 Manage Sessions & Availability</a>
+            <a href="{% url 'admin:core_yogaclass_changelist' %}" style="display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.9rem;background:var(--cream);border-radius:4px;text-decoration:none;color:var(--charcoal);font-size:0.875rem;transition:background 0.15s;" onmouseover="this.style.background='#e0e7db'" onmouseout="this.style.background='var(--cream)'">🧘 Manage Classes</a>
+            <a href="{% url 'admin:core_instructor_changelist' %}" style="display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.9rem;background:var(--cream);border-radius:4px;text-decoration:none;color:var(--charcoal);font-size:0.875rem;transition:background 0.15s;" onmouseover="this.style.background='#e0e7db'" onmouseout="this.style.background='var(--cream)'">👤 Manage Instructors</a>
+            <a href="{% url 'admin:core_membershipplan_changelist' %}" style="display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.9rem;background:var(--cream);border-radius:4px;text-decoration:none;color:var(--charcoal);font-size:0.875rem;transition:background 0.15s;" onmouseover="this.style.background='#e0e7db'" onmouseout="this.style.background='var(--cream)'">🎫 Manage Membership Plans</a>
+            <a href="{% url 'admin:core_contactmessage_changelist' %}" style="display:flex;align-items:center;gap:0.6rem;padding:0.7rem 0.9rem;background:var(--cream);border-radius:4px;text-decoration:none;color:var(--charcoal);font-size:0.875rem;transition:background 0.15s;" onmouseover="this.style.background='#e0e7db'" onmouseout="this.style.background='var(--cream)'">✉️ Read Contact Messages{% if unread_msgs %} <span style="background:var(--terracotta);color:white;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:0.65rem;margin-left:auto;">{{ unread_msgs }}</span>{% endif %}</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

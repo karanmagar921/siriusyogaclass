@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}Checkout — Sirius Yoga{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>{% if active_membership %}🎫 Confirm with Pass{% elif exhausted_pass %}⚠️ Pass Empty{% else %}🔒 Secure Checkout{% endif %}</h1>
+  <p>{% if active_membership %}Your {{ active_membership.plan.name }} will be used{% elif exhausted_pass %}Your pass has no classes remaining{% else %}Complete your payment details below{% endif %}</p>
+</div>
+
+<section class="section" style="padding-top:2.5rem;">
+  <div class="section-inner" style="max-width:960px;display:grid;grid-template-columns:1fr 320px;gap:2.5rem;align-items:start;">
+
+    <!-- LEFT -->
+    <div>
+      <!-- Order Items -->
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:1rem;">Your Order</h3>
+      {% for item in items %}
+      <div style="display:flex;gap:1rem;align-items:center;padding:1rem;background:white;border:1px solid var(--border);border-radius:6px;margin-bottom:0.75rem;">
+        <div style="width:54px;height:54px;border-radius:4px;overflow:hidden;background:var(--cream);flex-shrink:0;">{% class_photo item.yoga_class %}</div>
+        <div style="flex:1;">
+          <div style="font-weight:500;font-size:0.9rem;">{{ item.yoga_class.name }}</div>
+          <div style="font-size:0.8rem;color:var(--soft-grey);">📅 {{ item.session.date|date:"M j, Y" }} · {{ item.session.start_time|time:"g:i A" }}</div>
+        </div>
+        <div style="font-weight:600;color:var(--sage);">
+          {% if active_membership %}<span style="text-decoration:line-through;color:var(--soft-grey);font-size:0.85rem;margin-right:0.3rem;">A${{ item.subtotal }}</span><span style="color:#2e7d32;">FREE</span>
+          {% else %}A${{ item.subtotal }}{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- ── PASS LIMIT EXCEEDED ── -->
+      {% if pass_exceeded %}
+      <div style="background:#fff3e0;border:1.5px solid #ff8f00;border-radius:8px;padding:1.5rem;margin:1.25rem 0;">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+          <span style="font-size:1.5rem;">⚠️</span>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:#e65100;">Pass Limit Exceeded</div>
+            <div style="font-size:0.85rem;color:#bf360c;margin-top:0.2rem;">
+              You have <strong>{{ pass_exceeded_count }} classes</strong> in your cart but your pass only has <strong>{{ pass_remaining }} class{{ pass_remaining|pluralize }} remaining</strong>.
+            </div>
+          </div>
+        </div>
+        <p style="font-size:0.875rem;color:#5d4037;margin-bottom:1.25rem;">
+          You're trying to book <strong>{{ pass_excess }} more class{{ pass_excess|pluralize }}</strong> than your pass allows. Choose how to proceed:
+        </p>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <a href="{% url 'cart' %}" style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;background:white;border:1.5px solid #ff8f00;border-radius:6px;text-decoration:none;color:#5d4037;transition:background 0.2s;" onmouseover="this.style.background='#fff8f0'" onmouseout="this.style.background='white'">
+            <span style="font-size:1.1rem;">🗑️</span>
+            <div>
+              <div style="font-weight:600;font-size:0.9rem;">Remove {{ pass_excess }} class{{ pass_excess|pluralize }} from cart</div>
+              <div style="font-size:0.78rem;color:#8d6e63;">Go back to cart and keep only {{ pass_remaining }} class{{ pass_remaining|pluralize }}</div>
+            </div>
+          </a>
+          <a href="{% url 'pricing' %}" style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;background:white;border:1.5px solid #2e7d32;border-radius:6px;text-decoration:none;color:#1b5e20;transition:background 0.2s;" onmouseover="this.style.background='#f1f8e9'" onmouseout="this.style.background='white'">
+            <span style="font-size:1.1rem;">🎫</span>
+            <div>
+              <div style="font-weight:600;font-size:0.9rem;">Upgrade your pass</div>
+              <div style="font-size:0.78rem;color:#388e3c;">Buy a larger pack to cover all {{ pass_exceeded_count }} classes</div>
+            </div>
+          </a>
+          <button onclick="document.getElementById('splitPaySection').style.display='block';this.parentElement.style.display='none';"
+            style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;background:white;border:1.5px solid var(--sage);border-radius:6px;cursor:pointer;color:var(--charcoal);font-family:'Jost',sans-serif;text-align:left;width:100%;transition:background 0.2s;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='white'">
+            <span style="font-size:1.1rem;">💳</span>
+            <div>
+              <div style="font-weight:600;font-size:0.9rem;">Use pass for {{ pass_remaining }} + pay for {{ pass_excess }}</div>
+              <div style="font-size:0.78rem;color:var(--soft-grey);">Use your {{ pass_remaining }} remaining pass class{{ pass_remaining|pluralize }}, pay A${{ total }} for the rest</div>
+            </div>
+          </button>
+        </div>
+      </div>
+      <!-- Split pay: use pass for N, card for rest -->
+      <div id="splitPaySection" style="display:none;margin-top:1rem;">
+        <div style="background:#e8f5e9;border-radius:6px;padding:0.85rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:#1b5e20;">
+          ✅ Pass will cover <strong>{{ pass_remaining }} class{{ pass_remaining|pluralize }}</strong> · Pay by card for the remaining <strong>{{ pass_excess }}</strong>
+        </div>
+      {% endif %}
+
+      <!-- ── EXHAUSTED PASS WARNING ── -->
+      {% if exhausted_pass %}
+      <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:1.5rem;margin:1.5rem 0;">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+          <span style="font-size:1.5rem;">⚠️</span>
+          <div>
+            <div style="font-weight:600;font-size:1rem;color:#e65100;">{{ exhausted_pass.plan.name }} — No Classes Remaining</div>
+            <div style="font-size:0.82rem;color:#bf360c;">Your pass is valid until {{ exhausted_pass.end_date|date:"M j, Y" }} but has 0 classes left.</div>
+          </div>
+        </div>
+        <p style="font-size:0.875rem;color:#5d4037;margin-bottom:1.25rem;">Choose how you'd like to proceed:</p>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <!-- Option 1: Remove from cart -->
+          <a href="{% url 'cart' %}" style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;background:white;border:1.5px solid #ffb74d;border-radius:6px;text-decoration:none;color:#5d4037;transition:all 0.2s;" onmouseover="this.style.background='#fff8f0'" onmouseout="this.style.background='white'">
+            <span style="font-size:1.1rem;">🗑️</span>
+            <div>
+              <div style="font-weight:500;font-size:0.9rem;">Remove extra class from cart</div>
+              <div style="font-size:0.78rem;color:#8d6e63;">Go back to cart and remove the booking</div>
+            </div>
+          </a>
+          <!-- Option 2: Buy new pass -->
+          <a href="{% url 'pricing' %}" style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;background:white;border:1.5px solid #2e7d32;border-radius:6px;text-decoration:none;color:#1b5e20;transition:all 0.2s;" onmouseover="this.style.background='#f1f8e9'" onmouseout="this.style.background='white'">
+            <span style="font-size:1.1rem;">🎫</span>
+            <div>
+              <div style="font-weight:500;font-size:0.9rem;">Buy a new pass</div>
+              <div style="font-size:0.78rem;color:#388e3c;">Get more classes and come back to checkout</div>
+            </div>
+          </a>
+          <!-- Option 3: Pay by card -->
+          <button onclick="document.getElementById('cardOption').style.display='block';this.parentElement.style.display='none';"
+            style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;background:white;border:1.5px solid var(--sage);border-radius:6px;cursor:pointer;color:var(--charcoal);font-family:'Jost',sans-serif;text-align:left;width:100%;transition:all 0.2s;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='white'">
+            <span style="font-size:1.1rem;">💳</span>
+            <div>
+              <div style="font-weight:500;font-size:0.9rem;">Pay by card for this class</div>
+              <div style="font-size:0.78rem;color:var(--soft-grey);">A${{ total }} — one-time card payment</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Card section shown only if user picks "Pay by card" from exhausted pass -->
+      <div id="cardOption" style="display:none;">
+      {% endif %}
+
+      {% if active_membership %}
+      <!-- ── ACTIVE PASS BILLING ── -->
+      <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:1.5rem;margin:1.5rem 0;">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+          <span style="font-size:1.5rem;">🎫</span>
+          <div>
+            <div style="font-weight:600;font-size:1rem;color:#1b5e20;">{{ active_membership.plan.name }} — Active</div>
+            <div style="font-size:0.82rem;color:#2e7d32;">Valid until {{ active_membership.end_date|date:"M j, Y" }}</div>
+          </div>
+        </div>
+        {% if active_membership.plan.plan_type == 'pack' %}
+        <div style="font-size:0.875rem;color:#1b5e20;margin-bottom:1rem;">{{ active_membership.classes_remaining }} class{{ active_membership.classes_remaining|pluralize }} remaining — this booking will use {{ items.count }}</div>
+        {% else %}
+        <div style="font-size:0.875rem;color:#1b5e20;margin-bottom:1rem;">Unlimited classes — confirm for free</div>
+        {% endif %}
+        <form method="post" action="{% url 'checkout_cart' %}">
+          {% csrf_token %}
+          <input type="hidden" name="use_pass" value="1">
+          <button type="submit" style="width:100%;background:#2e7d32;color:white;border:none;padding:1rem;border-radius:4px;font-family:'Jost',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;transition:background 0.2s;" onmouseover="this.style.background='#1b5e20'" onmouseout="this.style.background='#2e7d32'">
+            🎫 Confirm Booking with Pass — FREE
+          </button>
+        </form>
+        <div style="text-align:center;margin-top:0.75rem;font-size:0.82rem;color:#2e7d32;">or</div>
+        <button onclick="document.getElementById('cardSection').style.display='block';this.parentElement.style.display='none';"
+          style="width:100%;margin-top:0.5rem;background:none;border:1px solid #2e7d32;color:#2e7d32;padding:0.65rem;border-radius:4px;font-family:'Jost',sans-serif;font-size:0.85rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(46,125,50,0.06)'" onmouseout="this.style.background='none'">
+          💳 Pay by Card Instead
+        </button>
+      </div>
+      <div id="cardSection" style="display:none;">
+      {% elif not exhausted_pass %}
+      <div id="cardSection">
+      {% endif %}
+
+      <!-- ── CARD FORM ── -->
+      {% if not exhausted_pass or True %}
+      <div style="background:#fff8e1;border:1px solid var(--gold);border-radius:6px;padding:0.9rem 1rem;margin:1.25rem 0;font-size:0.82rem;color:#7c5d0a;">
+        🧪 <strong>Test Mode:</strong> Use <code>4242 4242 4242 4242</code>, exp <code>12/26</code>, CVV <code>123</code>
+      </div>
+
+      <form method="post" action="{% url 'checkout_cart' %}" id="checkoutForm">
+        {% csrf_token %}
+        <input type="hidden" name="use_pass" value="0">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin:1rem 0 1rem;">Payment Details</h3>
+
+        <!-- Card Preview -->
+        <div style="background:linear-gradient(135deg,#2c3e2d,#1a2a1b);border-radius:12px;padding:1.75rem;color:white;margin-bottom:1.5rem;">
+          <div style="width:40px;height:28px;background:var(--gold);border-radius:4px;margin-bottom:1.5rem;"></div>
+          <div id="cardNumPreview" style="font-size:1.25rem;letter-spacing:0.25em;margin-bottom:1.5rem;font-family:monospace;">•••• •••• •••• ••••</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem;opacity:0.65;">
+            <span id="cardNamePreview">FULL NAME</span>
+            <span id="cardExpPreview">MM/YY</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Name on Card *</label>
+          <input type="text" name="card_name" id="cardName" class="form-input {% if 'card_name' in card_errors %}input-error{% endif %}"
+            placeholder="Full Name" value="{% if post_data.card_name %}{{ post_data.card_name }}{% else %}{{ user.get_full_name }}{% endif %}" required>
+          {% if 'card_name' in card_errors %}<div style="color:#c62828;font-size:0.78rem;margin-top:0.3rem;">⚠️ Name is required.</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Card Number *</label>
+          <input type="text" name="card_number" id="cardNum" class="form-input {% if 'card_number' in card_errors %}input-error{% endif %}"
+            placeholder="1234 5678 9012 3456" maxlength="19" value="{{ post_data.card_number|default:'' }}" required>
+          {% if 'card_number' in card_errors %}<div style="color:#c62828;font-size:0.78rem;margin-top:0.3rem;">⚠️ Enter a valid card number.</div>{% endif %}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Expiry *</label>
+            <input type="text" name="expiry" id="cardExp" class="form-input {% if 'expiry' in card_errors %}input-error{% endif %}"
+              placeholder="MM/YY" maxlength="5" value="{{ post_data.expiry|default:'' }}" required>
+            {% if 'expiry' in card_errors %}<div style="color:#c62828;font-size:0.78rem;margin-top:0.3rem;">⚠️ Enter MM/YY.</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">CVV *</label>
+            <input type="password" name="cvv" class="form-input {% if 'cvv' in card_errors %}input-error{% endif %}"
+              placeholder="•••" maxlength="4" required>
+            {% if 'cvv' in card_errors %}<div style="color:#c62828;font-size:0.78rem;margin-top:0.3rem;">⚠️ Enter 3–4 digit CVV.</div>{% endif %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary btn-full" style="padding:1.1rem;font-size:0.95rem;margin-top:0.5rem;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+          {% if pass_exceeded %}🔒 Pay A${{ total }} for {{ pass_excess }} Extra Class{{ pass_excess|pluralize }} + Use Pass for {{ pass_remaining }}{% else %}🔒 Pay A${{ total }} & Confirm Booking{% endif %}
+        </button>
+        {% if pass_exceeded %}<input type="hidden" name="use_pass" value="1">{% endif %}
+      </form>
+      {% endif %}
+
+      {% if pass_exceeded %}</div>{% endif %}
+      {% if active_membership or exhausted_pass %}</div>{% endif %}
+
+      <p style="text-align:center;margin-top:1rem;font-size:0.8rem;color:var(--soft-grey);">
+        <a href="{% url 'cart' %}" style="color:var(--sage);">← Back to Cart</a>
+      </p>
+    </div>
+
+    <!-- RIGHT: Summary -->
+    <div style="position:sticky;top:90px;">
+      <div style="background:var(--cream);border-radius:8px;padding:1.5rem;">
+        <div style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:1rem;">Order Summary</div>
+        {% for item in items %}
+        <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.5rem;color:var(--soft-grey);">
+          <span style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.yoga_class.name }}</span>
+          {% if active_membership %}<span style="text-decoration:line-through;">A${{ item.subtotal }}</span>
+          {% else %}<span>A${{ item.subtotal }}</span>{% endif %}
+        </div>
+        {% endfor %}
+        <div style="border-top:1px solid var(--border);padding-top:0.75rem;margin-top:0.5rem;display:flex;justify-content:space-between;font-weight:700;font-size:1.1rem;">
+          <span>Total</span>
+          {% if active_membership %}<span style="color:#2e7d32;">FREE 🎫</span>
+          {% else %}<span style="color:var(--sage);">A${{ total }}</span>{% endif %}
+        </div>
+        {% if active_membership %}
+        <div style="margin-top:0.75rem;padding:0.6rem 0.75rem;background:#e8f5e9;border-radius:4px;font-size:0.78rem;color:#2e7d32;">
+          Using: {{ active_membership.plan.name }}<br>
+          {% if active_membership.plan.plan_type == 'pack' %}{{ active_membership.classes_remaining }} classes remaining{% else %}Unlimited{% endif %}
+        </div>
+        {% elif exhausted_pass %}
+        <div style="margin-top:0.75rem;padding:0.6rem 0.75rem;background:#fff3e0;border-radius:4px;font-size:0.78rem;color:#e65100;">
+          ⚠️ {{ exhausted_pass.plan.name }}: 0 classes left
+        </div>
+        {% endif %}
+        <div style="margin-top:1rem;font-size:0.78rem;color:var(--soft-grey);display:flex;flex-direction:column;gap:0.3rem;">
+          <div>🔒 Secure payment</div>
+          <div>🎫 Membership passes applied</div>
+          <div>📧 Receipt emailed instantly</div>
+          <div>✅ Free cancellation before deadline</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('cardNum')?.addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g,'').substring(0,16);
+  e.target.value = v.replace(/(.{4})/g,'$1 ').trim();
+  document.getElementById('cardNumPreview').textContent = (v+'•'.repeat(16-v.length)).replace(/(.{4})/g,'$1 ').trim();
+});
+document.getElementById('cardName')?.addEventListener('input', e => {
+  document.getElementById('cardNamePreview').textContent = e.target.value.toUpperCase() || 'FULL NAME';
+});
+document.getElementById('cardExp')?.addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g,'');
+  if(v.length>=2) v = v.substring(0,2)+'/'+v.substring(2,4);
+  e.target.value = v;
+  document.getElementById('cardExpPreview').textContent = v || 'MM/YY';
+});
+const savedName = document.getElementById('cardName')?.value;
+if(savedName) document.getElementById('cardNamePreview').textContent = savedName.toUpperCase();
+</script>
+{% endblock %}

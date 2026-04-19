@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}Instructors — Sirius Yoga{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Our Instructors</h1>
+  <p>Meet the guides on your yoga journey</p>
+</div>
+<section class="section">
+  <div class="section-inner">
+    <div class="grid-3">
+      {% for instructor in instructors %}
+      <a href="{% url 'instructor_detail' instructor.pk %}" style="text-decoration:none;color:inherit;" class="class-card">
+        <div class="card-img" style="height:240px;">
+          {% instructor_photo instructor "100%" %}
+        </div>
+        <div class="card-body">
+          <div class="card-title">{{ instructor.name }}</div>
+          {% if instructor.specialties %}
+          <div style="font-size:0.8rem;color:var(--sage);margin-bottom:0.5rem;">{{ instructor.specialties }}</div>
+          {% endif %}
+          <div class="card-meta">{{ instructor.years_experience }} years experience</div>
+          <p style="font-size:0.875rem;color:var(--soft-grey);">{{ instructor.bio|truncatechars:100 }}</p>
+        </div>
+      </a>
+      {% empty %}
+      <p style="grid-column:1/-1;text-align:center;color:var(--soft-grey)">Instructor profiles coming soon.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

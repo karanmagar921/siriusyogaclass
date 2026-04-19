@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}Book — {{ yoga_class.name }} — Sirius Yoga{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Confirm Booking</h1>
+  <p>{{ yoga_class.name }} · {{ session.date|date:"l, M j" }} · {{ session.start_time|time:"g:i A" }}</p>
+</div>
+<section class="section">
+  <div class="section-inner" style="max-width:800px;display:grid;grid-template-columns:1fr 360px;gap:2.5rem;align-items:start;">
+    <!-- Form -->
+    <div style="background:white;border:1px solid var(--border);border-radius:4px;padding:2rem;">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:1.5rem;">Complete Your Booking</h3>
+
+      {% if active_membership %}
+      <div style="background:#e8f5e9;border-radius:4px;padding:1rem;margin-bottom:1.5rem;font-size:0.875rem;color:#2e7d32;">
+        🎫 <strong>{{ active_membership.plan.name }}</strong> will be used for this booking — no payment needed!
+        {% if active_membership.classes_remaining is not None %}
+        <br><span style="opacity:0.8">{{ active_membership.classes_remaining }} classes remaining after this booking.</span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'book_session' session.pk %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Special Requests / Health Notes</label>
+          {{ form.notes }}
+          <div style="font-size:0.75rem;color:var(--soft-grey);margin-top:0.3rem;">Optional. Share any injuries or conditions your instructor should know about.</div>
+        </div>
+
+        <div style="background:var(--cream);border-radius:4px;padding:1rem;margin-bottom:1.5rem;font-size:0.875rem;">
+          By booking, you agree to our <strong>{{ yoga_class.cancellation_hours }}-hour cancellation policy</strong>. Deadline for this session: <strong>{{ session.cancellation_deadline|date:"M j, g:i A" }}</strong>.
+        </div>
+
+        <button type="submit" class="btn-primary btn-full">
+          {% if active_membership %}✅ Confirm Booking (Free via Pass){% else %}Request Booking — A${{ session.effective_price }}{% endif %}
+        </button>
+      </form>
+    </div>
+
+    <!-- Summary -->
+    <div style="background:var(--cream);border-radius:4px;padding:1.5rem;position:sticky;top:90px;">
+      <div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:1rem;">Booking Summary</div>
+      {% if yoga_class.image %}<img src="{{ yoga_class.image.url }}" style="width:100%;height:120px;object-fit:cover;border-radius:4px;margin-bottom:1rem;">{% endif %}
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500;margin-bottom:0.5rem;">{{ yoga_class.name }}</div>
+      {% if yoga_class.instructor %}<div style="font-size:0.85rem;color:var(--soft-grey);margin-bottom:0.75rem;">with {{ yoga_class.instructor.name }}</div>{% endif %}
+      <div style="display:flex;flex-direction:column;gap:0.4rem;font-size:0.875rem;color:var(--soft-grey);border-top:1px solid var(--border);padding-top:0.75rem;">
+        <div>📅 {{ session.date|date:"l, M j, Y" }}</div>
+        <div>🕐 {{ session.start_time|time:"g:i A" }} – {{ session.end_time|time:"g:i A" }}</div>
+        <div>⏱️ {{ yoga_class.duration_minutes }} minutes</div>
+        <div>👥 {{ session.spots_remaining }} spots left</div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:0.75rem;margin-top:0.75rem;display:flex;justify-content:space-between;font-weight:500;">
+        <span>Total</span>
+        <span style="color:var(--sage);">{% if active_membership %}Free 🎫{% else %}A${{ session.effective_price }}{% endif %}</span>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Pricing — Sirius Yoga{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Pricing & Passes</h1>
+  <p>Flexible options to suit your practice</p>
+</div>
+<section class="section">
+  <div class="section-inner">
+    <div style="max-width:900px;margin:0 auto;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem;">
+        {% for plan in plans %}
+        <div style="background:white;border:{% if plan.highlight %}2px solid var(--sage){% else %}1px solid var(--border){% endif %};border-radius:8px;padding:2rem;position:relative;transition:all 0.3s;">
+          {% if plan.highlight %}
+          <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--sage);color:white;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;padding:0.3rem 0.9rem;border-radius:20px;">Most Popular</div>
+          {% endif %}
+          <div style="font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.5rem;">{{ plan.get_plan_type_display }}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:500;margin-bottom:0.5rem;">{{ plan.name }}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:600;color:{% if plan.highlight %}var(--sage){% else %}var(--charcoal){% endif %};line-height:1;margin-bottom:0.25rem;">A${{ plan.price }}</div>
+          <div style="font-size:0.8rem;color:var(--soft-grey);margin-bottom:1.5rem;">
+            {% if plan.plan_type == 'unlimited' %}per {{ plan.validity_days }} days, unlimited classes
+            {% elif plan.plan_type == 'pack' %}for {{ plan.classes_included }} classes, valid {{ plan.validity_days }} days
+            {% else %}single session{% endif %}
+          </div>
+          {% if plan.description %}<p style="font-size:0.875rem;color:var(--soft-grey);line-height:1.7;margin-bottom:1.5rem;">{{ plan.description }}</p>{% endif %}
+          {% if user.is_authenticated %}
+          <a href="{% url 'buy_membership' plan.pk %}" class="btn-primary btn-full" style="text-align:center;display:block;{% if plan.highlight %}background:var(--sage){% else %}background:var(--charcoal){% endif %}">Buy Now</a>
+          {% else %}
+          <a href="{% url 'register' %}" class="btn-primary btn-full" style="text-align:center;display:block;">Get Started</a>
+          {% endif %}
+        </div>
+        {% empty %}
+        <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--soft-grey);">
+          <p>Pricing plans coming soon. <a href="{% url 'contact' %}" style="color:var(--sage);">Contact us</a> for rates.</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- FAQ -->
+      <div style="margin-top:4rem;">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:400;text-align:center;margin-bottom:2rem;">Common Questions</h3>
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          {% for q, a in faq %}
+          <details style="border:1px solid var(--border);border-radius:4px;padding:1.25rem;">
+            <summary style="font-weight:500;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;">{{ q }}<span>+</span></summary>
+            <p style="margin-top:0.75rem;color:var(--soft-grey);font-size:0.9rem;line-height:1.7;">{{ a }}</p>
+          </details>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

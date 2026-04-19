@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}My Profile — Sirius Yoga{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>My Profile</h1>
+  <p>Manage your account and health information</p>
+</div>
+<section class="section">
+  <div class="section-inner" style="max-width:720px;">
+    <div style="background:white;border:1px solid var(--border);border-radius:4px;padding:2.5rem;">
+
+      <!-- Avatar + Info -->
+      <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);">
+        <div style="width:72px;height:72px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;font-size:2rem;color:white;overflow:hidden;flex-shrink:0;">
+          {% if profile.avatar %}<img src="{{ profile.avatar.url }}" style="width:100%;height:100%;object-fit:cover;">{% else %}{{ user.first_name|first|default:user.username|first|upper }}{% endif %}
+        </div>
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:500;">{{ user.get_full_name|default:user.username }}</div>
+          <div style="color:var(--soft-grey);font-size:0.875rem;">{{ user.email }}</div>
+          <div style="color:var(--soft-grey);font-size:0.75rem;margin-top:0.2rem;">Member since {{ user.date_joined|date:"M Y" }}</div>
+        </div>
+      </div>
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div style="font-size:0.8rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.5rem;">Personal Details</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">First Name</label>{{ form.first_name }}</div>
+          <div class="form-group"><label class="form-label">Last Name</label>{{ form.last_name }}</div>
+        </div>
+        <div class="form-group"><label class="form-label">Email</label>{{ form.email }}</div>
+        <div class="form-group"><label class="form-label">Phone</label>{{ form.phone }}</div>
+        <div class="form-group"><label class="form-label">Bio</label>{{ form.bio }}</div>
+        <div class="form-group"><label class="form-label">Profile Photo</label>{{ form.avatar }}</div>
+
+        <div style="font-size:0.8rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-top:1.5rem;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.5rem;">Health & Safety</div>
+        <div class="form-group"><label class="form-label">Emergency Contact</label>{{ form.emergency_contact }}</div>
+        <div class="form-group">
+          <label class="form-label">Health Notes</label>{{ form.health_notes }}
+          <div style="font-size:0.75rem;color:var(--soft-grey);margin-top:0.3rem;">Shared privately with instructors before class.</div>
+        </div>
+
+        <div style="display:flex;gap:1rem;margin-top:1.5rem;flex-wrap:wrap;">
+          <button type="submit" class="btn-primary">Save Changes</button>
+          <a href="{% url 'my_bookings' %}" class="btn-outline" style="color:var(--charcoal);border-color:var(--border);padding:0.75rem 1.5rem;">My Bookings</a>
+          <a href="{% url 'pricing' %}" class="btn-outline" style="color:var(--sage);border-color:var(--sage);padding:0.75rem 1.5rem;">Buy Pass 🎫</a>
+          <a href="{% url 'password_change' %}" class="btn-outline" style="color:var(--soft-grey);border-color:var(--border);padding:0.75rem 1.5rem;">🔐 Change Password</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

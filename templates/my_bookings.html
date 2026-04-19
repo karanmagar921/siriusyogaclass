@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}My Bookings — Sirius Yoga{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>My Bookings</h1>
+  <p>Manage your sessions and passes</p>
+</div>
+<section class="section">
+  <div class="section-inner">
+
+    <!-- Active Memberships -->
+    {% if memberships %}
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:1rem;">Active Passes & Memberships</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:3rem;">
+      {% for m in memberships %}
+      <div style="background:linear-gradient(135deg,var(--sage-dark),#1a2a1b);border-radius:8px;padding:1.5rem;color:white;">
+        <div style="font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;opacity:0.6;margin-bottom:0.25rem;">Active Pass</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin-bottom:0.75rem;">{{ m.plan.name }}</div>
+        <div style="font-size:0.8rem;opacity:0.7;margin-bottom:0.25rem;">Valid until {{ m.end_date|date:"M j, Y" }}</div>
+        {% if m.classes_remaining is not None %}
+          <div style="font-size:0.8rem;opacity:0.7;">{{ m.classes_remaining }} classes remaining</div>
+        {% else %}
+          <div style="font-size:0.8rem;opacity:0.7;">Unlimited classes</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Waitlist -->
+    {% if waitlist %}
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:1rem;">Waitlist</h3>
+    <div style="margin-bottom:2.5rem;overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Class</th><th>Date & Time</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for w in waitlist %}
+          <tr>
+            <td><a href="{% url 'session_detail' w.session.pk %}" style="color:var(--sage);text-decoration:none;font-weight:500">{{ w.session.yoga_class.name }}</a></td>
+            <td>{{ w.session.date|date:"M j" }} · {{ w.session.start_time|time:"g:i A" }}</td>
+            <td><span class="status-badge status-pending">⏳ Waiting</span></td>
+            <td>
+              <form method="post" action="{% url 'leave_waitlist' w.session.pk %}">
+                {% csrf_token %}
+                <button type="submit" style="background:none;border:1px solid var(--border);padding:0.3rem 0.75rem;border-radius:2px;cursor:pointer;font-size:0.75rem;color:var(--soft-grey);">Leave Waitlist</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- Bookings -->
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:1rem;">My Sessions</h3>
+    {% if bookings %}
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Booking Status</th>
+            <th>Payment</th>
+            <th>Pass Used</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in bookings %}
+          <tr>
+            <td>
+              <a href="{% if b.session %}{% url 'session_detail' b.session.pk %}{% else %}{% url 'class_detail' b.yoga_class.pk %}{% endif %}"
+                 style="color:var(--sage);text-decoration:none;font-weight:500">
+                {{ b.yoga_class.name }}
+              </a>
+              <div style="font-size:0.75rem;color:var(--soft-grey)">A${{ b.yoga_class.price }}</div>
+            </td>
+            <td>{{ b.booking_date|date:"M j, Y" }}</td>
+            <td>{% if b.session %}{{ b.session.start_time|time:"g:i A" }}{% else %}—{% endif %}</td>
+            <td><span class="status-badge status-{{ b.status }}">{{ b.get_status_display }}</span></td>
+            <td>
+              {% if b.payment_status == 'paid' %}
+                <span class="status-badge status-accepted">Paid ✅</span>
+              {% elif b.payment_status == 'free' %}
+                <span class="status-badge status-accepted">Free via Pass 🎫</span>
+              {% else %}
+                <span class="status-badge status-unpaid">Unpaid</span>
+              {% endif %}
+            </td>
+            <td style="font-size:0.8rem;color:var(--soft-grey)">
+              {% if b.used_membership %}{{ b.used_membership.plan.name }}{% else %}—{% endif %}
+            </td>
+            <td>
+              <div style="display:flex;flex-direction:column;gap:0.4rem;">
+                {% if b.status == 'accepted' and b.payment_status == 'unpaid' %}
+                  <a href="{% url 'payment_page' b.pk %}" class="btn-primary"
+                     style="padding:0.35rem 0.85rem;font-size:0.75rem;text-align:center;">Pay Now</a>
+                {% endif %}
+
+                {% if b.status == 'pending' or b.status == 'accepted' %}
+                  {% if b.can_cancel %}
+                    <form method="post" action="{% url 'cancel_booking' b.pk %}">
+                      {% csrf_token %}
+                      <button type="submit"
+                        onclick="return confirm('Cancel this booking?')"
+                        style="width:100%;background:none;border:1px solid var(--border);padding:0.35rem 0.65rem;border-radius:2px;cursor:pointer;font-size:0.75rem;color:var(--soft-grey)">
+                        Cancel
+                      </button>
+                    </form>
+                  {% else %}
+                    <span style="font-size:0.72rem;color:#c62828;">⛔ Past deadline</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:3rem;color:var(--soft-grey);">
+      <div style="font-size:3.5rem;margin-bottom:1rem">📅</div>
+      <p>No bookings yet. <a href="{% url 'schedule' %}" style="color:var(--sage)">View the schedule →</a></p>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

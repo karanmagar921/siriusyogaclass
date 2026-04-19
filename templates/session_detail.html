@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}{{ yoga_class.name }} — {{ session.date }} — Sirius Yoga{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <span style="font-size:0.75rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold);">{{ yoga_class.get_category_display }}</span>
+  <h1>{{ yoga_class.name }}</h1>
+  <p>{{ session.date|date:"l, F j, Y" }} · {{ session.start_time|time:"g:i A" }} – {{ session.end_time|time:"g:i A" }}</p>
+</div>
+
+<section class="section">
+  <div class="section-inner">
+    <div class="detail-grid">
+      <!-- LEFT -->
+      <div>
+        <!-- Session Info Bar -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem;margin-bottom:2rem;">
+          <div style="background:var(--cream);padding:1rem;border-radius:4px;text-align:center;">
+            <div style="font-size:1.5rem;">📅</div>
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--soft-grey);margin-top:0.4rem;">Date</div>
+            <div style="font-weight:500;font-size:0.875rem;">{{ session.date|date:"M j, Y" }}</div>
+          </div>
+          <div style="background:var(--cream);padding:1rem;border-radius:4px;text-align:center;">
+            <div style="font-size:1.5rem;">⏰</div>
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--soft-grey);margin-top:0.4rem;">Time</div>
+            <div style="font-weight:500;font-size:0.875rem;">{{ session.start_time|time:"g:i A" }}</div>
+          </div>
+          <div style="background:var(--cream);padding:1rem;border-radius:4px;text-align:center;">
+            <div style="font-size:1.5rem;">⏱️</div>
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--soft-grey);margin-top:0.4rem;">Duration</div>
+            <div style="font-weight:500;font-size:0.875rem;">{{ yoga_class.duration_minutes }} min</div>
+          </div>
+          <div style="background:{% if session.is_full %}#fce4ec{% elif session.is_low_spots %}#fff8e1{% else %}var(--cream){% endif %};padding:1rem;border-radius:4px;text-align:center;">
+            <div style="font-size:1.5rem;">👥</div>
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--soft-grey);margin-top:0.4rem;">Spots Left</div>
+            <div style="font-weight:600;font-size:0.875rem;" class="{% if session.is_full %}spots-full-text{% elif session.is_low_spots %}spots-low-text{% endif %}">
+              {% if session.is_full %}Full{% else %}{{ session.spots_remaining }} / {{ session.effective_max }}{% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% if session.is_full and session.waitlist_count > 0 %}
+        <div style="background:#fff8e1;border-radius:4px;padding:1rem;margin-bottom:1.5rem;font-size:0.875rem;color:#7c5d0a;display:flex;gap:0.5rem;align-items:center;">
+          ⏳ This class is full. <strong>{{ session.waitlist_count }} people</strong> are on the waitlist.
+        </div>
+        {% endif %}
+
+        {% if session.notes %}
+        <div style="background:rgba(122,158,126,0.1);border-left:3px solid var(--sage);padding:1rem;border-radius:0 4px 4px 0;margin-bottom:1.5rem;font-size:0.9rem;">
+          📢 <strong>Session Note:</strong> {{ session.notes }}
+        </div>
+        {% endif %}
+
+        <!-- About -->
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:0.75rem;">About This Class</h3>
+        <p style="color:var(--soft-grey);line-height:1.9;margin-bottom:2rem;">{{ yoga_class.description }}</p>
+
+        {% if yoga_class.prerequisite_note %}
+        <div style="background:#e3f2fd;border-radius:4px;padding:1rem;margin-bottom:1.5rem;font-size:0.875rem;color:#0d47a1;">
+          📋 <strong>Prerequisites:</strong> {{ yoga_class.prerequisite_note }}
+        </div>
+        {% endif %}
+
+        <!-- Instructor -->
+        {% if yoga_class.instructor %}
+        <div style="display:flex;gap:1.25rem;align-items:center;background:var(--cream);padding:1.25rem;border-radius:4px;margin-bottom:2rem;">
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;flex-shrink:0;overflow:hidden;">
+            {% instructor_photo yoga_class.instructor "56px" %}
+          </div>
+          <div>
+            <div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);">Your Instructor</div>
+            <div style="font-weight:500;font-size:1rem;">{{ yoga_class.instructor.name }}</div>
+            <a href="{% url 'instructor_detail' yoga_class.instructor.pk %}" style="font-size:0.8rem;color:var(--sage);">View profile →</a>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- What to Bring -->
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin-bottom:0.75rem;">What to Bring</h3>
+        <p style="color:var(--soft-grey);font-size:0.9rem;line-height:1.8;margin-bottom:2rem;">{{ yoga_class.what_to_bring }}</p>
+
+        <!-- Cancellation Policy -->
+        <div style="border:1px solid var(--border);border-radius:4px;padding:1.25rem;">
+          <div style="font-weight:500;margin-bottom:0.5rem;">📋 Cancellation Policy</div>
+          <p style="font-size:0.875rem;color:var(--soft-grey);">
+            Cancel up to <strong>{{ yoga_class.cancellation_hours }} hours</strong> before class for a full refund or credit return.
+            Deadline: <strong>{{ session.cancellation_deadline|date:"M j, g:i A" }}</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="detail-sidebar">
+        <div class="booking-widget">
+          <div style="font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--soft-grey);">Session Price</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:500;margin-bottom:0.25rem;">A${{ session.effective_price }}</div>
+          <div style="font-size:0.8rem;color:var(--soft-grey);margin-bottom:1.5rem;">per session</div>
+
+          {% if session.is_unavailable %}
+          <!-- NOT AVAILABLE BANNER -->
+          <div style="background:#f3e5f5;border:1px solid #ce93d8;border-radius:8px;padding:1.5rem;text-align:center;margin-bottom:1rem;">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">🚫</div>
+            <div style="font-weight:600;color:#6a1b9a;font-size:1rem;margin-bottom:0.25rem;">Not Available</div>
+            <div style="font-size:0.85rem;color:#8e24aa;">This session has been marked unavailable by the studio.</div>
+            {% if session.notes %}
+            <div style="font-size:0.82rem;color:#6a1b9a;margin-top:0.5rem;font-style:italic;">{{ session.notes }}</div>
+            {% endif %}
+            <a href="{% url 'schedule' %}" style="display:inline-block;margin-top:1rem;font-size:0.85rem;color:#6a1b9a;text-decoration:underline;">View other sessions →</a>
+          </div>
+
+          {% elif user_booking %}
+          <div style="background:#e8f5e9;border-radius:4px;padding:1rem;text-align:center;margin-bottom:1rem;">
+            <div style="color:#2e7d32;font-weight:500;">✅ You're Booked!</div>
+            <div style="font-size:0.8rem;color:#2e7d32;margin-top:0.25rem;">Status: {{ user_booking.get_status_display }}</div>
+          </div>
+          {% if user_booking.status == 'accepted' and user_booking.payment_status == 'unpaid' %}
+          <a href="{% url 'payment_page' user_booking.pk %}" class="btn-primary btn-full" style="text-align:center;display:block;margin-bottom:0.75rem;">Pay Now — A${{ session.effective_price }}</a>
+          {% endif %}
+          {% if user_booking.can_cancel %}
+          <form method="post" action="{% url 'cancel_booking' user_booking.pk %}">
+            {% csrf_token %}
+            <button type="submit"
+              onclick="return confirm('Cancel this booking?')"
+              style="width:100%;background:none;border:1px solid var(--border);padding:0.6rem;border-radius:2px;cursor:pointer;font-size:0.8rem;color:var(--soft-grey);">
+              Cancel Booking
+            </button>
+          </form>
+          {% else %}
+          <div style="font-size:0.78rem;color:#c62828;text-align:center;padding:0.5rem;">
+            ⛔ Cancellation deadline has passed.
+          </div>
+          {% endif %}
+
+          {% elif user_waitlist %}
+          <div style="background:#fff8e1;border-radius:4px;padding:1rem;text-align:center;margin-bottom:1rem;">
+            <div style="color:#7c5d0a;font-weight:500;">⏳ On Waitlist</div>
+            <div style="font-size:0.8rem;color:#7c5d0a;margin-top:0.25rem;">We'll email you when a spot opens.</div>
+          </div>
+          <form method="post" action="{% url 'leave_waitlist' session.pk %}">
+            {% csrf_token %}
+            <button type="submit" style="width:100%;background:none;border:1px solid var(--border);padding:0.6rem;border-radius:2px;cursor:pointer;font-size:0.8rem;color:var(--soft-grey);">Leave Waitlist</button>
+          </form>
+
+          {% elif session.is_past %}
+          <div style="background:var(--cream);border-radius:4px;padding:1rem;text-align:center;font-size:0.875rem;color:var(--soft-grey);">
+            This session has passed.
+          </div>
+
+          {% elif user.is_authenticated %}
+            {% if user_booking %}
+              <!-- Already booked this session -->
+              <div style="background:#e8f5e9;border-radius:6px;padding:1rem;text-align:center;margin-bottom:0.75rem;">
+                <div style="font-size:1.25rem;margin-bottom:0.25rem;">✅</div>
+                <div style="font-weight:600;color:#2e7d32;font-size:0.9rem;">You're booked!</div>
+                <div style="font-size:0.8rem;color:#388e3c;margin-top:0.25rem;">{{ user_booking.get_status_display }}</div>
+              </div>
+              <a href="{% url 'my_bookings' %}" style="display:block;text-align:center;font-size:0.82rem;color:var(--sage);">View My Bookings →</a>
+            {% elif in_cart %}
+              <!-- Already in cart -->
+              <div style="background:#e3f2fd;border-radius:6px;padding:1rem;text-align:center;margin-bottom:0.75rem;">
+                <div style="font-size:1.25rem;margin-bottom:0.25rem;">🛒</div>
+                <div style="font-weight:600;color:#1565c0;font-size:0.9rem;">Already in your cart</div>
+              </div>
+              <a href="{% url 'cart' %}" class="btn-primary btn-full" style="text-align:center;display:block;margin-bottom:0.5rem;">View Cart & Checkout</a>
+              <a href="{% url 'intake_form' session.pk %}" style="display:block;text-align:center;font-size:0.8rem;color:var(--soft-grey);">Update booking details</a>
+            {% elif session.is_full %}
+            <form method="post" action="{% url 'join_waitlist' session.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn-primary btn-full" style="background:var(--gold);color:var(--charcoal);">Join Waitlist ({{ session.waitlist_count }} waiting)</button>
+            </form>
+            {% else %}
+            <!-- GET link — takes user to intake form, shows pre-filled data, no errors on load -->
+            <a href="{% url 'intake_form' session.pk %}" class="btn-primary btn-full" style="text-align:center;display:block;font-size:0.9rem;">
+              🛒 {% if session.is_low_spots %}Add to Cart ({{ session.spots_remaining }} left!){% else %}Add to Cart{% endif %}
+            </a>
+            <a href="{% url 'cart' %}" style="display:block;text-align:center;font-size:0.8rem;color:var(--sage);margin-top:0.5rem;">View Cart →</a>
+            {% endif %}
+          {% else %}
+          <a href="{% url 'login' %}?next={{ request.path }}" class="btn-primary btn-full" style="text-align:center;display:block;">Login to Book</a>
+          <p style="text-align:center;margin-top:0.75rem;font-size:0.8rem;color:var(--soft-grey);">New here? <a href="{% url 'register' %}?next={% url 'intake_form' session.pk %}" style="color:var(--sage)">Create free account</a></p>
+          {% endif %}
+
+          <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:0.8rem;color:var(--soft-grey);display:flex;flex-direction:column;gap:0.5rem;">
+            <div>✅ Cancel {{ yoga_class.cancellation_hours }}h before</div>
+            <div>🔒 Secure payment</div>
+            <div>📧 Email confirmation</div>
+            <div>🎫 Membership passes accepted</div>
+          </div>
+        </div>
+
+        <!-- Share -->
+        <div style="margin-top:1rem;background:white;border:1px solid var(--border);border-radius:4px;padding:1.25rem;">
+          <div style="font-size:0.8rem;font-weight:500;margin-bottom:0.75rem;">Share this class</div>
+          <button onclick="navigator.clipboard.writeText(window.location.href);this.textContent='✅ Copied!';setTimeout(()=>this.textContent='🔗 Copy Link',2000)" style="width:100%;background:var(--cream);border:1px solid var(--border);padding:0.6rem;border-radius:2px;cursor:pointer;font-size:0.8rem;">🔗 Copy Link</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

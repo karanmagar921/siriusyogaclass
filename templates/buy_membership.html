@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}Buy {{ plan.name }} — Sirius Yoga{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>Purchase Pass</h1>
+  <p>{{ plan.name }}</p>
+</div>
+
+<section class="section" style="padding-top:2.5rem;">
+  <div class="section-inner" style="max-width:900px;display:grid;grid-template-columns:1fr 320px;gap:2.5rem;align-items:start;">
+
+    <!-- LEFT: Card Form -->
+    <div>
+      <!-- Test mode banner -->
+      <div style="background:#fff8e1;border:1px solid var(--gold);border-radius:6px;padding:0.9rem 1rem;margin-bottom:1.5rem;font-size:0.82rem;color:#7c5d0a;">
+        🧪 <strong>Test Mode:</strong> Use <code>4242 4242 4242 4242</code>, exp <code>12/26</code>, CVV <code>123</code>
+      </div>
+
+      {% if card_errors %}
+      <div style="background:#fce4ec;border-radius:6px;padding:0.9rem 1rem;margin-bottom:1.5rem;font-size:0.85rem;color:#c62828;">
+        ⚠️ Please fix the card details below.
+      </div>
+      {% endif %}
+
+      <form method="post" id="membershipForm">
+        {% csrf_token %}
+
+        <!-- Card Preview -->
+        <div style="background:linear-gradient(135deg,#2c3e2d,#1a2a1b);border-radius:12px;padding:1.75rem;color:white;margin-bottom:1.5rem;">
+          <div style="width:40px;height:28px;background:var(--gold);border-radius:4px;margin-bottom:1.5rem;"></div>
+          <div id="cardNumPreview" style="font-size:1.25rem;letter-spacing:0.25em;margin-bottom:1.5rem;font-family:monospace;">•••• •••• •••• ••••</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem;opacity:0.65;">
+            <span id="cardNamePreview">FULL NAME</span>
+            <span id="cardExpPreview">MM/YY</span>
+          </div>
+        </div>
+
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin-bottom:1.25rem;">Card Details</h3>
+
+        <div class="form-group">
+          <label class="form-label">Name on Card *</label>
+          <input type="text" name="card_name" id="cardName" class="form-input {% if 'card_name' in card_errors %}input-error{% endif %}"
+            placeholder="Full Name"
+            value="{% if post_data.card_name %}{{ post_data.card_name }}{% else %}{{ user.get_full_name }}{% endif %}" required>
+          {% if 'card_name' in card_errors %}<div style="color:#c62828;font-size:0.78rem;margin-top:0.3rem;">⚠️ Name on card is required.</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Card Number *</label>
+          <input type="text" name="card_number" id="cardNum" class="form-input {% if 'card_number' in card_errors %}input-error{% endif %}"
+            placeholder="1234 5678 9012 3456" maxlength="19"
+            value="{{ post_data.card_number|default:'' }}" required>
+          {% if 'card_number' in card_errors %}<div style="color:#c62828;font-size:0.78rem;margin-top:0.3rem;">⚠️ Enter a valid 13–16 digit card number.</div>{% endif %}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Expiry *</label>
+            <input type="text" name="expiry" id="cardExp" class="form-input {% if 'expiry' in card_errors %}input-error{% endif %}"
+              placeholder="MM/YY" maxlength="5"
+              value="{{ post_data.expiry|default:'' }}" required>
+            {% if 'expiry' in card_errors %}<div style="color:#c62828;font-size:0.78rem;margin-top:0.3rem;">⚠️ Enter expiry as MM/YY.</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">CVV *</label>
+            <input type="password" name="cvv" class="form-input {% if 'cvv' in card_errors %}input-error{% endif %}"
+              placeholder="•••" maxlength="4" required>
+            {% if 'cvv' in card_errors %}<div style="color:#c62828;font-size:0.78rem;margin-top:0.3rem;">⚠️ Enter 3–4 digit CVV.</div>{% endif %}
+          </div>
+        </div>
+
+        <!-- Billing info (pre-filled) -->
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin:1.5rem 0 1rem;">Billing Details</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-input" value="{{ user.first_name }}" readonly style="background:var(--cream);">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-input" value="{{ user.last_name }}" readonly style="background:var(--cream);">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" value="{{ user.email }}" readonly style="background:var(--cream);">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="text" class="form-input" value="{{ profile.phone|default:'—' }}" readonly style="background:var(--cream);">
+        </div>
+        <p style="font-size:0.78rem;color:var(--soft-grey);margin-bottom:1.5rem;">
+          To update billing details, <a href="{% url 'customer_profile' %}" style="color:var(--sage);">edit your profile →</a>
+        </p>
+
+        <button type="submit" class="btn-primary btn-full" style="padding:1.1rem;font-size:0.95rem;">
+          🔒 Pay A${{ plan.price }} & Activate Pass
+        </button>
+      </form>
+    </div>
+
+    <!-- RIGHT: Summary -->
+    <div style="position:sticky;top:90px;">
+      <div style="background:var(--cream);border-radius:8px;padding:1.5rem;">
+        <div style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:1rem;">Pass Summary</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:500;margin-bottom:0.5rem;">{{ plan.name }}</div>
+        <div style="font-size:0.875rem;color:var(--soft-grey);margin-bottom:1rem;">{{ plan.description }}</div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem;font-size:0.875rem;border-top:1px solid var(--border);padding-top:0.75rem;">
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--soft-grey);">Type</span><span>{{ plan.get_plan_type_display }}</span></div>
+          {% if plan.classes_included %}<div style="display:flex;justify-content:space-between;"><span style="color:var(--soft-grey);">Classes</span><span>{{ plan.classes_included }}</span></div>{% endif %}
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--soft-grey);">Valid for</span><span>{{ plan.validity_days }} days</span></div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:0.75rem;margin-top:0.75rem;display:flex;justify-content:space-between;font-weight:700;font-size:1.1rem;">
+          <span>Total</span>
+          <span style="color:var(--sage);">A${{ plan.price }}</span>
+        </div>
+        <div style="margin-top:1rem;font-size:0.78rem;color:var(--soft-grey);display:flex;flex-direction:column;gap:0.3rem;">
+          <div>🔒 Secure payment</div>
+          <div>📧 Receipt emailed instantly</div>
+          <div>✅ Active immediately after purchase</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('cardNum')?.addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g,'').substring(0,16);
+  e.target.value = v.replace(/(.{4})/g,'$1 ').trim();
+  document.getElementById('cardNumPreview').textContent = (v+'•'.repeat(16-v.length)).replace(/(.{4})/g,'$1 ').trim();
+});
+document.getElementById('cardName')?.addEventListener('input', e => {
+  document.getElementById('cardNamePreview').textContent = e.target.value.toUpperCase() || 'FULL NAME';
+});
+document.getElementById('cardExp')?.addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g,'');
+  if(v.length>=2) v = v.substring(0,2)+'/'+v.substring(2,4);
+  e.target.value = v;
+  document.getElementById('cardExpPreview').textContent = v || 'MM/YY';
+});
+// Pre-fill card preview from saved name
+const savedName = document.getElementById('cardName').value;
+if(savedName) document.getElementById('cardNamePreview').textContent = savedName.toUpperCase();
+</script>
+{% endblock %}

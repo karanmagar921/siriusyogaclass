@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}Sirius Yoga — Find Your Balance{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-content">
+    <p class="hero-eyebrow">✦ Adelaide's Premier Yoga & Pilates Studio</p>
+    <h1>Find Your <em>Balance</em>,<br>Discover Your Strength</h1>
+    <p>Transform your mind, body, and spirit. From beginner Hatha to advanced Reformer Pilates — book your spot in seconds.</p>
+    <div class="hero-cta">
+      <a href="{% url 'schedule' %}" class="btn-primary">View Schedule</a>
+      <a href="{% url 'pricing' %}" class="btn-outline">See Pricing</a>
+    </div>
+  </div>
+</section>
+
+<!-- UPCOMING SESSIONS -->
+{% if upcoming %}
+<section class="section" style="padding:3rem 2rem;">
+  <div class="section-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+      <span style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;">Upcoming Sessions</span>
+      <a href="{% url 'schedule' %}" style="font-size:0.8rem;color:var(--sage);text-decoration:none;">Full schedule →</a>
+    </div>
+    <div style="display:flex;gap:1rem;overflow-x:auto;padding-bottom:0.5rem;">
+      {% for session in upcoming %}
+      <a href="{% url 'session_detail' session.pk %}" style="flex:0 0 200px;background:white;border:1px solid var(--border);border-radius:4px;padding:1.25rem;text-decoration:none;color:inherit;transition:all 0.2s;display:block;" class="hover-lift">
+        <div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--sage);margin-bottom:0.25rem;">{{ session.date|date:"D, M j" }}</div>
+        <div style="font-weight:500;margin-bottom:0.25rem;font-size:0.95rem;">{{ session.yoga_class.name }}</div>
+        <div style="font-size:0.8rem;color:var(--soft-grey);margin-bottom:0.5rem;">{{ session.start_time|time:"g:i A" }}{% if session.yoga_class.instructor %} · {{ session.yoga_class.instructor.name }}{% endif %}</div>
+        <div style="font-size:0.75rem;" class="{% if session.is_full %}spots-full-text{% elif session.is_low_spots %}spots-low-text{% else %}spots-ok-text{% endif %}">
+          {% if session.is_full %}Full · {{ session.waitlist_count }} waitlisted{% elif session.is_low_spots %}⚡ {{ session.spots_remaining }} spots left{% else %}{{ session.spots_remaining }} spots{% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- STATS -->
+<section class="section section-alt" style="padding:3rem 2rem;">
+  <div class="section-inner">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-number">12+</div><div class="stat-label">Class Styles</div></div>
+      <div class="stat-card"><div class="stat-number">500+</div><div class="stat-label">Happy Students</div></div>
+      <div class="stat-card"><div class="stat-number">5★</div><div class="stat-label">Avg Rating</div></div>
+      <div class="stat-card"><div class="stat-number">10+</div><div class="stat-label">Years Experience</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CLASSES -->
+<section class="section">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-eyebrow">What We Offer</span>
+      <h2 class="section-title">Featured Classes</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="grid-3">
+      {% for class in classes %}
+      <a href="{% url 'class_booking_page' class.slug %}" class="class-card">
+        <div class="card-img">{% class_photo class %}</div>
+        <div class="card-body">
+          <div class="card-level">{{ class.get_level_display }} · {{ class.get_category_display }}</div>
+          <div class="card-title">{{ class.name }}</div>
+          <div class="card-meta">{% if class.instructor %}{{ class.instructor.name }}{% endif %} &nbsp;·&nbsp; {{ class.duration_minutes }} min</div>
+          <p style="font-size:0.875rem;color:var(--soft-grey);margin-bottom:1rem;">{{ class.description|truncatechars:80 }}</p>
+          <div class="card-footer">
+            <span class="card-price">A${{ class.price }}</span>
+            <span class="card-rating">{% with avg=class.avg_rating %}{% if avg > 0 %}⭐ {{ avg }}{% else %}New{% endif %}{% endwith %}</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    <div style="text-align:center;margin-top:2.5rem;"><a href="{% url 'classes' %}" class="btn-primary">All Classes</a></div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="section section-alt">
+  <div class="section-inner">
+    <div class="section-header"><span class="section-eyebrow">Student Stories</span><h2 class="section-title">What Our Students Say</h2><div class="section-divider"></div></div>
+    <div class="grid-3">
+      {% for review in reviews %}
+      <div class="review-card">
+        <div class="review-header">
+          <div><div class="reviewer-name">{{ review.user.get_full_name|default:review.user.username }}</div><div class="reviewer-date">{{ review.yoga_class.name }}</div></div>
+          <div style="color:var(--gold)">{% for i in "12345" %}{% if forloop.counter|lte:review.rating %}⭐{% endif %}{% endfor %}</div>
+        </div>
+        <p class="review-comment">"{{ review.comment|truncatechars:120 }}"</p>
+        <div style="font-size:0.75rem;color:var(--soft-grey);margin-top:0.75rem;">{{ review.created_at|date:"M j, Y" }}</div>
+      </div>
+      {% empty %}<p style="grid-column:1/-1;text-align:center;color:var(--soft-grey)">Be the first to leave a review!</p>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="background:linear-gradient(135deg,var(--sage-dark),#1a2a1b);padding:6rem 2rem;text-align:center;">
+  <span style="font-size:0.75rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold);">Start Today</span>
+  <h2 style="font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:300;color:var(--cream);margin:1rem 0;">Ready to Begin Your Practice?</h2>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+    <a href="{% url 'register' %}" class="btn-primary" style="background:var(--gold);color:var(--charcoal);">Join Free</a>
+    <a href="{% url 'pricing' %}" class="btn-outline">View Passes</a>
+  </div>
+</section>
+{% endblock %}

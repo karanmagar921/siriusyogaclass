@@ -1,0 +1,15 @@
+{% if status == 'booked' %}
+  <span class="avail-badge avail-booked"><span class="avail-dot dot-booked"></span>Booked</span>
+{% elif status == 'waitlist' %}
+  <span class="avail-badge avail-waitlist"><span class="avail-dot dot-low"></span>Waitlisted</span>
+{% elif status == 'unavailable' %}
+  <span class="avail-badge avail-unavailable"><span class="avail-dot dot-unavailable"></span>Not Available</span>
+{% elif status == 'past' %}
+  <span class="avail-badge avail-past"><span class="avail-dot dot-past"></span>Ended</span>
+{% elif status == 'full' %}
+  <span class="avail-badge avail-full"><span class="avail-dot dot-full"></span>Full{% if waitlist_count %} · {{ waitlist_count }} waiting{% endif %}</span>
+{% elif status == 'low' %}
+  <span class="avail-badge avail-low"><span class="avail-dot dot-low"></span>{{ spots }} spot{% if spots != 1 %}s{% endif %} left</span>
+{% else %}
+  <span class="avail-badge avail-open"><span class="avail-dot dot-open"></span>{{ spots }} available</span>
+{% endif %}

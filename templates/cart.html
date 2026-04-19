@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}Cart — Sirius Yoga{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🛒 Your Cart</h1>
+  <p>{{ items|length }} item{% if items|length != 1 %}s{% endif %} in your cart</p>
+</div>
+<section class="section">
+  <div class="section-inner" style="max-width:900px;">
+    {% if items %}
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:2.5rem;align-items:start;">
+
+      <!-- Cart Items -->
+      <div>
+        {% for item in items %}
+        <div style="display:flex;gap:1.25rem;align-items:flex-start;padding:1.25rem;background:white;border:1px solid var(--border);border-radius:8px;margin-bottom:1rem;">
+          <div style="width:72px;height:72px;background:var(--cream);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;overflow:hidden;">
+            {% class_photo item.yoga_class %}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <a href="{% url 'class_booking_page' item.yoga_class.slug %}" style="font-weight:500;color:var(--charcoal);text-decoration:none;font-size:1rem;display:block;margin-bottom:0.2rem;">{{ item.yoga_class.name }}</a>
+            {% if item.session %}
+            <div style="font-size:0.82rem;color:var(--soft-grey);margin-bottom:0.15rem;">📅 {{ item.session.date|date:"l, M j, Y" }}</div>
+            <div style="font-size:0.82rem;color:var(--soft-grey);margin-bottom:0.15rem;">🕐 {{ item.session.start_time|time:"g:i A" }} – {{ item.session.end_time|time:"g:i A" }}</div>
+            {% if item.yoga_class.instructor %}<div style="font-size:0.82rem;color:var(--soft-grey);">👤 {{ item.yoga_class.instructor.name }}</div>{% endif %}
+            {% endif %}
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:500;color:var(--charcoal);">A${{ item.subtotal }}</div>
+            <div style="font-size:0.78rem;color:var(--soft-grey);margin-bottom:0.75rem;">Qty: {{ item.quantity }}</div>
+            <form method="post" action="{% url 'remove_from_cart' item.pk %}">
+              {% csrf_token %}
+              <button type="submit" style="background:none;border:none;font-size:0.78rem;color:#c62828;cursor:pointer;text-decoration:underline;">Remove</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+
+        <a href="{% url 'classes' %}" style="font-size:0.875rem;color:var(--sage);text-decoration:none;">← Continue browsing classes</a>
+      </div>
+
+      <!-- Order Summary -->
+      <div style="position:sticky;top:90px;">
+        <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:1.5rem;">
+          <div style="font-size:0.8rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:1.25rem;">Order Summary</div>
+
+          {% for item in items %}
+          <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.5rem;">
+            <span style="color:var(--soft-grey);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.yoga_class.name }}</span>
+            <span>A${{ item.subtotal }}</span>
+          </div>
+          {% endfor %}
+
+          <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:0.75rem;display:flex;justify-content:space-between;font-weight:600;font-size:1.05rem;">
+            <span>Total</span>
+            <span style="color:var(--sage);">A${{ total }}</span>
+          </div>
+
+          <a href="{% url 'checkout_cart' %}" class="btn-primary btn-full" style="display:block;text-align:center;margin-top:1.25rem;padding:1rem;">
+            Proceed to Checkout →
+          </a>
+
+          <div style="margin-top:1rem;font-size:0.78rem;color:var(--soft-grey);display:flex;flex-direction:column;gap:0.35rem;">
+            <div>🔒 Secure checkout</div>
+            <div>🎫 Membership passes applied automatically</div>
+            <div>✅ Free cancellation before deadline</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <div style="text-align:center;padding:4rem;color:var(--soft-grey);">
+      <div style="font-size:4rem;margin-bottom:1rem;">🛒</div>
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:0.75rem;">Your cart is empty</h3>
+      <p style="margin-bottom:1.5rem;">Browse our classes and add sessions to your cart.</p>
+      <a href="{% url 'classes' %}" class="btn-primary">Browse Classes</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}{{ instructor.name }} — Sirius Yoga{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>{{ instructor.name }}</h1>
+  <p>{{ instructor.specialties }}</p>
+</div>
+<section class="section">
+  <div class="section-inner" style="max-width:900px;">
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:3rem;align-items:start;">
+      <div>
+        <div style="width:100%;aspect-ratio:1;border-radius:8px;background:linear-gradient(135deg,var(--sage),var(--sage-dark));display:flex;align-items:center;justify-content:center;font-size:5rem;overflow:hidden;margin-bottom:1.5rem;">
+          {% instructor_photo instructor "100%" %}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <div style="background:var(--cream);padding:0.75rem 1rem;border-radius:4px;font-size:0.85rem;">
+            <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.25rem;">Experience</div>
+            <div style="font-weight:500;">{{ instructor.years_experience }} years</div>
+          </div>
+          {% if instructor.certifications %}
+          <div style="background:var(--cream);padding:0.75rem 1rem;border-radius:4px;font-size:0.85rem;">
+            <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.25rem;">Certifications</div>
+            <div>{{ instructor.certifications }}</div>
+          </div>
+          {% endif %}
+          {% if instructor.instagram %}
+          <a href="https://instagram.com/{{ instructor.instagram }}" target="_blank" style="background:var(--cream);padding:0.75rem 1rem;border-radius:4px;font-size:0.85rem;text-decoration:none;color:var(--charcoal);display:block;">📸 @{{ instructor.instagram }}</a>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:1rem;">About {{ instructor.name }}</h3>
+        <p style="color:var(--soft-grey);line-height:1.9;margin-bottom:1.5rem;">{{ instructor.bio }}</p>
+
+        {% if instructor.email or instructor.phone or instructor.instagram or instructor.website %}
+        <div style="background:var(--cream);border-radius:8px;padding:1.25rem;margin-bottom:2rem;">
+          <div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.85rem;">Contact</div>
+          <div style="display:flex;flex-direction:column;gap:0.55rem;">
+            {% if instructor.email %}
+            <div style="display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;">
+              <span>📧</span>
+              <a href="mailto:{{ instructor.email }}" style="color:var(--sage);text-decoration:none;">{{ instructor.email }}</a>
+            </div>
+            {% endif %}
+            {% if instructor.phone %}
+            <div style="display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;">
+              <span>📞</span>
+              <a href="tel:{{ instructor.phone }}" style="color:var(--sage);text-decoration:none;">{{ instructor.phone }}</a>
+            </div>
+            {% endif %}
+            {% if instructor.instagram %}
+            <div style="display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;">
+              <span>📸</span>
+              <span style="color:var(--charcoal);">{{ instructor.instagram }}</span>
+            </div>
+            {% endif %}
+            {% if instructor.website %}
+            <div style="display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;">
+              <span>🌐</span>
+              <a href="{{ instructor.website }}" target="_blank" style="color:var(--sage);text-decoration:none;">{{ instructor.website }}</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+        {% if classes %}
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:1rem;">Classes by {{ instructor.name }}</h3>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          {% for c in classes %}
+          <a href="{% url 'class_detail' c.pk %}" style="display:flex;align-items:center;gap:1rem;padding:1rem;background:var(--cream);border-radius:4px;text-decoration:none;color:inherit;transition:all 0.2s;">
+            <div style="flex:1;">
+              <div style="font-weight:500;">{{ c.name }}</div>
+              <div style="font-size:0.8rem;color:var(--soft-grey);">{{ c.get_level_display }} · {{ c.duration_minutes }} min · A${{ c.price }}</div>
+            </div>
+            <span style="color:var(--sage);">→</span>
+          </a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

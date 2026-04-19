@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}Search: {{ query }} — Sirius Yoga{% endblock %}
+{% block content %}
+
+<!-- Search Header -->
+<div class="search-header">
+  <form class="search-header-form" action="{% url 'search_results' %}" method="get">
+    <input type="text" name="q" class="search-header-input" value="{{ query }}" placeholder="Search classes, instructors…" autofocus>
+    <button type="submit" class="btn-primary" style="padding:0.85rem 1.5rem;white-space:nowrap;">Search</button>
+  </form>
+  {% if query %}
+  <p style="text-align:center;margin-top:0.75rem;font-size:0.875rem;color:var(--soft-grey);">
+    {{ total }} result{% if total != 1 %}s{% endif %} for <strong>"{{ query }}"</strong>
+  </p>
+  {% endif %}
+</div>
+
+<section class="section">
+  <div class="section-inner" style="max-width:900px;">
+
+    {% if not query %}
+    <!-- No query yet -->
+    <div style="text-align:center;padding:4rem;color:var(--soft-grey);">
+      <div style="font-size:3rem;margin-bottom:1rem;">🔍</div>
+      <p>Start typing above to search for yoga classes and instructors.</p>
+    </div>
+
+    {% elif total == 0 %}
+    <!-- No results -->
+    <div style="text-align:center;padding:4rem;color:var(--soft-grey);">
+      <div style="font-size:3rem;margin-bottom:1rem;">😔</div>
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:0.5rem;">No results found</h3>
+      <p>No classes or instructors match "<strong>{{ query }}</strong>"</p>
+      <div style="margin-top:1.5rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+        <a href="{% url 'classes' %}" class="btn-primary">Browse All Classes</a>
+        <a href="{% url 'instructors' %}" class="btn-outline" style="color:var(--charcoal);border-color:var(--border);padding:0.9rem 2rem;">View Instructors</a>
+      </div>
+    </div>
+
+    {% else %}
+
+    <!-- Classes Results -->
+    {% if classes %}
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;margin-bottom:1.25rem;">
+      Classes <span style="font-size:1rem;font-family:'Jost',sans-serif;color:var(--soft-grey);">({{ classes.count }})</span>
+    </h2>
+    <div style="display:flex;flex-direction:column;gap:1rem;margin-bottom:3rem;">
+      {% for cls in classes %}
+      {% with next_sess=cls.sessions.first %}
+      {% if next_sess and next_sess.status == 'unavailable' %}
+      <!-- UNAVAILABLE class -->
+      <div class="search-result-card unavailable-card" style="cursor:default;">
+        <div class="src-photo-fallback">
+          {% if cls.photo_url or cls.image %}
+            {% class_photo cls %}
+          {% else %}🧘{% endif %}
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.25rem;">
+            <span style="font-weight:500;font-size:1rem;">{{ cls.name }}</span>
+            <span class="avail-badge avail-unavailable"><span class="avail-dot dot-unavailable"></span>Not Available</span>
+          </div>
+          <div style="font-size:0.8rem;color:var(--soft-grey);margin-bottom:0.5rem;">
+            {{ cls.get_level_display }} · {{ cls.get_category_display }}
+            {% if cls.instructor %} · {{ cls.instructor.name }}{% endif %} · A${{ cls.price }}
+          </div>
+          <p style="font-size:0.875rem;color:var(--soft-grey);line-height:1.6;margin-bottom:0.75rem;">{{ cls.description|truncatechars:100 }}</p>
+          <div style="font-size:0.8rem;color:#6a1b9a;background:#f3e5f5;padding:0.4rem 0.75rem;border-radius:4px;display:inline-block;">
+            🚫 This class is currently not available for booking. Check back soon.
+          </div>
+        </div>
+      </div>
+
+      {% else %}
+      <!-- AVAILABLE class -->
+      <a href="{% url 'class_booking_page' cls.slug %}" class="search-result-card">
+        <div class="src-photo-fallback" style="overflow:hidden;">
+          {% if cls.photo_url or cls.image %}{% class_photo cls %}{% else %}🧘{% endif %}
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.25rem;">
+            <span style="font-weight:500;font-size:1rem;">{{ cls.name }}</span>
+            {% if next_sess %}
+              {% if next_sess.is_full %}
+                <span class="avail-badge avail-full"><span class="avail-dot dot-full"></span>Full</span>
+              {% elif next_sess.is_low_spots %}
+                <span class="avail-badge avail-low"><span class="avail-dot dot-low"></span>{{ next_sess.spots_remaining }} left</span>
+              {% else %}
+                <span class="avail-badge avail-open"><span class="avail-dot dot-open"></span>Available</span>
+              {% endif %}
+            {% endif %}
+          </div>
+          <div style="font-size:0.8rem;color:var(--soft-grey);margin-bottom:0.5rem;">
+            {{ cls.get_level_display }} · {{ cls.get_category_display }}
+            {% if cls.instructor %} · {{ cls.instructor.name }}{% endif %} · A${{ cls.price }}
+          </div>
+          <p style="font-size:0.875rem;color:var(--soft-grey);line-height:1.6;margin-bottom:0.75rem;">{{ cls.description|truncatechars:120 }}</p>
+          {% if next_sess %}
+          <div style="font-size:0.8rem;color:var(--sage);">
+            📅 Next: {{ next_sess.date|date:"l, M j" }} at {{ next_sess.start_time|time:"g:i A" }}
+          </div>
+          {% endif %}
+        </div>
+        <div style="color:var(--soft-grey);font-size:1rem;flex-shrink:0;">→</div>
+      </a>
+      {% endif %}
+      {% endwith %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Instructors Results -->
+    {% if instructors %}
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;margin-bottom:1.25rem;">
+      Instructors <span style="font-size:1rem;font-family:'Jost',sans-serif;color:var(--soft-grey);">({{ instructors.count }})</span>
+    </h2>
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      {% for inst in instructors %}
+      <a href="{% url 'instructor_detail' inst.pk %}" class="search-result-card">
+        <div style="width:80px;height:80px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:2rem;">
+          {% instructor_photo inst "80px" %}
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:500;font-size:1rem;margin-bottom:0.25rem;">{{ inst.name }}</div>
+          <div style="font-size:0.8rem;color:var(--sage);margin-bottom:0.5rem;">{{ inst.specialties }}</div>
+          <p style="font-size:0.875rem;color:var(--soft-grey);line-height:1.6;">{{ inst.bio|truncatechars:120 }}</p>
+        </div>
+        <div style="color:var(--soft-grey);font-size:1rem;flex-shrink:0;">→</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Manage Bookings — Sirius Yoga{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Manage Bookings</h1>
+  <p>Accept, reject, and track student session bookings</p>
+</div>
+<section class="section">
+  <div class="section-inner">
+
+    <!-- Stats -->
+    <div class="stats-grid" style="margin-bottom:2.5rem;">
+      {% with total=bookings|length %}
+      <div class="stat-card"><div class="stat-number">{{ total }}</div><div class="stat-label">Total Bookings</div></div>
+      {% endwith %}
+      <div class="stat-card"><div class="stat-number" style="color:var(--gold)">{{ bookings|dictsortreversed:"status"|length }}</div><div class="stat-label">Pending Review</div></div>
+      <div class="stat-card"><div class="stat-number" style="color:#2e7d32">—</div><div class="stat-label">Confirmed</div></div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs" id="filterTabs" style="margin-bottom:1.5rem;">
+      <button class="filter-tab active" onclick="filterTable(this,'all')">All</button>
+      <button class="filter-tab" onclick="filterTable(this,'pending')">⏳ Pending</button>
+      <button class="filter-tab" onclick="filterTable(this,'accepted')">✅ Accepted</button>
+      <button class="filter-tab" onclick="filterTable(this,'rejected')">❌ Rejected</button>
+      <button class="filter-tab" onclick="filterTable(this,'cancelled')">🚫 Cancelled</button>
+      <button class="filter-tab" onclick="filterTable(this,'attended')">🧘 Attended</button>
+    </div>
+
+    {% if bookings %}
+    <div style="overflow-x:auto;">
+      <table class="data-table" id="bookingTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Class</th>
+            <th>Session Date</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Pass Used</th>
+            <th>Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in bookings %}
+          <tr data-status="{{ b.status }}">
+            <td style="color:var(--soft-grey);font-size:0.8rem;font-weight:600;">{{ forloop.counter }}</td>
+            <td>
+              <div style="font-weight:500;font-size:0.875rem;">{{ b.user.get_full_name|default:b.user.username }}</div>
+              <div style="font-size:0.75rem;color:var(--soft-grey);">{{ b.user.email }}</div>
+            </td>
+            <td>
+              <a href="{% url 'class_detail' b.yoga_class.pk %}" style="color:var(--sage);text-decoration:none;font-size:0.875rem;font-weight:500">{{ b.yoga_class.name }}</a>
+            </td>
+            <td style="font-size:0.875rem;">
+              {% if b.session %}{{ b.session.date|date:"M j, Y" }}{% else %}{{ b.booking_date }}{% endif %}
+            </td>
+            <td style="font-size:0.875rem;">
+              {% if b.session %}{{ b.session.start_time|time:"g:i A" }}{% else %}—{% endif %}
+            </td>
+            <td><span class="status-badge status-{{ b.status }}">{{ b.get_status_display }}</span></td>
+            <td>
+              <span class="status-badge {% if b.payment_status == 'paid' or b.payment_status == 'free' %}status-accepted{% else %}status-unpaid{% endif %}">
+                {{ b.get_payment_status_display }}
+              </span>
+            </td>
+            <td style="font-size:0.8rem;color:var(--soft-grey)">
+              {% if b.used_membership %}{{ b.used_membership.plan.name }}{% else %}—{% endif %}
+            </td>
+            <td style="max-width:130px;font-size:0.8rem;color:var(--soft-grey)">{{ b.notes|truncatechars:35|default:"—" }}</td>
+            <td>
+              <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                {% if b.status == 'pending' %}
+                <form method="post" action="{% url 'update_booking_status' b.pk %}">
+                  {% csrf_token %}<input type="hidden" name="action" value="accept">
+                  <button type="submit" class="action-btn action-accept">✅ Accept</button>
+                </form>
+                <form method="post" action="{% url 'update_booking_status' b.pk %}">
+                  {% csrf_token %}<input type="hidden" name="action" value="reject">
+                  <button type="submit" class="action-btn action-reject">❌ Reject</button>
+                </form>
+                {% elif b.status == 'accepted' %}
+                <form method="post" action="{% url 'update_booking_status' b.pk %}">
+                  {% csrf_token %}<input type="hidden" name="action" value="attended">
+                  <button type="submit" class="action-btn action-attended">🧘 Attended</button>
+                </form>
+                {% else %}
+                <span style="font-size:0.8rem;color:var(--soft-grey);">—</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:4rem;color:var(--soft-grey);">
+      <div style="font-size:4rem;margin-bottom:1rem">📋</div>
+      <p>No bookings yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+function filterTable(btn, status) {
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#bookingTable tbody tr').forEach(row => {
+    row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

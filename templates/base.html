@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Sirius Yoga{% endblock %}</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="{% url 'home' %}" class="nav-brand">Sirius <span>Yoga</span></a>
+
+  <!-- ── Search Bar ── -->
+  <div class="search-wrap" id="searchWrap">
+    <div class="search-box">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search classes, instructors…" autocomplete="off" spellcheck="false">
+      <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none;">✕</button>
+    </div>
+    <!-- Autocomplete Dropdown -->
+    <div class="search-dropdown" id="searchDropdown"></div>
+  </div>
+
+  <ul class="nav-links">
+    <li><a href="{% url 'home' %}">Home</a></li>
+    <li><a href="{% url 'schedule' %}">Schedule</a></li>
+    <li><a href="{% url 'classes' %}">Classes</a></li>
+    <li><a href="{% url 'instructors' %}">Instructors</a></li>
+    <li><a href="{% url 'pricing' %}">Pricing</a></li>
+    {% if user.is_authenticated %}
+      <li>
+        <a href="{% url 'cart' %}" style="display:flex;align-items:center;gap:0.35rem;position:relative;">
+          <span style="font-size:1.1rem;">🛒</span>
+          {% if cart_count > 0 %}
+          <span style="position:absolute;top:-6px;right:-8px;background:var(--terracotta);color:white;border-radius:50%;width:17px;height:17px;font-size:0.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;">{{ cart_count }}</span>
+          {% endif %}
+        </a>
+      </li>
+      {% if user.is_staff %}
+        <li><a href="{% url 'owner_dashboard' %}">Dashboard</a></li>
+        <li><a href="{% url 'manage_bookings' %}">Bookings</a></li>
+        <li><a href="{% url 'manage_payments' %}">Payments</a></li>
+        <li><a href="{% url 'admin:index' %}">Admin</a></li>
+      {% else %}
+        <li><a href="{% url 'my_bookings' %}">My Bookings</a></li>
+      {% endif %}
+      <li><a href="{% url 'customer_profile' %}">
+        <span style="width:28px;height:28px;background:var(--sage);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:white;font-size:0.75rem;font-weight:600">
+          {{ user.first_name|first|default:user.username|first|upper }}
+        </span>
+      </a></li>
+      <li><a href="{% url 'logout' %}" class="btn-nav">Logout</a></li>
+    {% else %}
+      <li><a href="{% url 'login' %}">Login</a></li>
+      <li><a href="{% url 'register' %}" class="btn-nav">Join Free</a></li>
+    {% endif %}
+  </ul>
+</nav>
+
+{% if messages %}
+<div class="messages-container" id="msgContainer">
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }}">
+    {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}❌{% elif message.tags == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">Sirius <span>Yoga</span></div>
+        <p style="font-size:0.875rem;line-height:1.8;max-width:300px;color:rgba(245,240,232,0.55);">
+          Find your balance, discover your strength, and cultivate inner peace. Adelaide's premier yoga & pilates studio.
+        </p>
+      </div>
+      <div>
+        <div class="footer-heading">Studio</div>
+        <ul class="footer-links">
+          <li><a href="{% url 'schedule' %}">Class Schedule</a></li>
+          <li><a href="{% url 'classes' %}">All Classes</a></li>
+          <li><a href="{% url 'instructors' %}">Instructors</a></li>
+          <li><a href="{% url 'pricing' %}">Pricing & Passes</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-heading">Info</div>
+        <ul class="footer-links">
+          <li><a href="{% url 'about' %}">About Us</a></li>
+          <li><a href="{% url 'contact' %}">Contact</a></li>
+          <li><a href="mailto:thapakarann89@gmail.com">✉️ thapakarann89@gmail.com</a></li>
+        </ul>
+        <div style="margin-top:1.25rem;">
+          <div class="footer-heading">Follow Us</div>
+          <div style="display:flex;gap:0.75rem;margin-top:0.5rem;">
+            <a href="https://www.facebook.com" target="_blank" rel="noopener"
+               style="width:36px;height:36px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.2s;"
+               onmouseover="this.style.background='#1877f2'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="https://www.instagram.com" target="_blank" rel="noopener"
+               style="width:36px;height:36px;background:rgba(255,255,255,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.2s;"
+               onmouseover="this.style.background='#e1306c'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2025 Sirius Yoga. All rights reserved. Made with 🌿</div>
+  </div>
+</footer>
+
+<script>
+// ── Messages auto-dismiss ────────────────────────────────────────────────────
+setTimeout(() => {
+  const c = document.getElementById('msgContainer');
+  if (c) { c.style.opacity='0'; c.style.transition='opacity 0.5s'; setTimeout(()=>c.remove(),500); }
+}, 4500);
+
+// ── Active Nav Link ──────────────────────────────────────────────────────────
+(function() {
+  const path = window.location.pathname;
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    const href = a.getAttribute('href');
+    if (!href) return;
+    if (href === '/' && path === '/') {
+      a.classList.add('nav-active');
+    } else if (href !== '/' && path.startsWith(href)) {
+      a.classList.add('nav-active');
+    }
+  });
+})();
+
+// ── Search Autocomplete (Google-style) ──────────────────────────────────────
+const searchInput    = document.getElementById('searchInput');
+const searchDropdown = document.getElementById('searchDropdown');
+const searchClear    = document.getElementById('searchClear');
+let searchTimer = null;
+let activeIdx   = -1;
+
+function clearSearch() {
+  searchInput.value = '';
+  searchDropdown.innerHTML = '';
+  searchDropdown.style.display = 'none';
+  searchClear.style.display = 'none';
+  searchInput.focus();
+  activeIdx = -1;
+}
+
+function boldMatch(text, query) {
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx < 0) return text;
+  return text.slice(0, idx) + '<strong>' + text.slice(idx, idx + query.length) + '</strong>' + text.slice(idx + query.length);
+}
+
+function renderDropdown(results, query) {
+  let html = '';
+
+  if (!results.length) {
+    searchDropdown.innerHTML =
+      `<div class="sd-empty">No results for "<strong>${query}</strong>"</div>
+       <a href="/search/?q=${encodeURIComponent(query)}" class="sd-all">Search all classes →</a>`;
+    searchDropdown.style.display = 'block';
+    return;
+  }
+
+  results.forEach((r, i) => {
+    const unavailable = r.next_status === 'unavailable';
+    const badge = unavailable
+      ? `<span class="sd-badge sd-unavail">🚫 Not Available</span>`
+      : r.next_session
+        ? `<span class="sd-badge sd-avail">📅 Next: ${r.next_session}</span>`
+        : '';
+    const photo = r.photo
+      ? `<img src="${r.photo}" alt="" class="sd-photo" onerror="this.style.background='var(--cream)';">`
+      : `<div class="sd-photo sd-photo-fallback">🧘</div>`;
+    const icon = r.type === 'instructor'
+      ? `<svg class="sd-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`
+      : `<svg class="sd-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`;
+
+    html += `
+      <a href="${r.url}" class="sd-item${unavailable ? ' sd-item-unavail' : ''}" data-idx="${i}">
+        ${icon}
+        <div class="sd-info" style="flex:1;min-width:0;">
+          <div class="sd-name">${boldMatch(r.name, query)}</div>
+          <div class="sd-sub">${r.subtitle}</div>
+          ${badge}
+        </div>
+        ${photo}
+      </a>`;
+  });
+
+  html += `<a href="/search/?q=${encodeURIComponent(query)}" class="sd-all">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    Search all results for "<strong>${query}</strong>"
+  </a>`;
+
+  searchDropdown.innerHTML = html;
+  searchDropdown.style.display = 'block';
+  activeIdx = -1;
+}
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  searchClear.style.display = q ? 'inline' : 'none';
+  clearTimeout(searchTimer);
+  if (q.length < 2) { searchDropdown.style.display = 'none'; activeIdx = -1; return; }
+  searchTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`/search/autocomplete/?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      renderDropdown(data.results, data.query);
+    } catch(e) { console.error(e); }
+  }, 180);
+});
+
+// Keyboard navigation
+searchInput.addEventListener('keydown', (e) => {
+  const items = searchDropdown.querySelectorAll('.sd-item, .sd-all');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    activeIdx = Math.min(activeIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('sd-active', i === activeIdx));
+    if (items[activeIdx]) items[activeIdx].scrollIntoView({block:'nearest'});
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    activeIdx = Math.max(activeIdx - 1, -1);
+    items.forEach((el, i) => el.classList.toggle('sd-active', i === activeIdx));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (activeIdx >= 0 && items[activeIdx]) { items[activeIdx].click(); }
+    else { window.location.href = `/search/?q=${encodeURIComponent(searchInput.value.trim())}`; }
+  } else if (e.key === 'Escape') {
+    searchDropdown.style.display = 'none'; activeIdx = -1;
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('searchWrap')?.contains(e.target)) {
+    if (searchDropdown) { searchDropdown.style.display = 'none'; activeIdx = -1; }
+  }
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

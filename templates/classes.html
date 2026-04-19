@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}Classes — Sirius Yoga{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>All Classes</h1>
+  <p>Find your perfect practice</p>
+</div>
+
+<section class="section">
+  <div class="section-inner">
+
+    <!-- Category Filter -->
+    <div style="margin-bottom:0.75rem;">
+      <div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.5rem;">Category</div>
+      <div class="filter-tabs">
+        <a href="{% url 'classes' %}{% if selected_level %}?level={{ selected_level }}{% endif %}" class="filter-tab {% if not selected_category %}active{% endif %}">All</a>
+        {% for val, label in categories %}
+        <a href="?category={{ val }}{% if selected_level %}&level={{ selected_level }}{% endif %}" class="filter-tab {% if selected_category == val %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Level Filter -->
+    <div style="margin-bottom:2.5rem;">
+      <div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.5rem;">Level</div>
+      <div class="filter-tabs">
+        <a href="{% url 'classes' %}{% if selected_category %}?category={{ selected_category }}{% endif %}" class="filter-tab {% if not selected_level %}active{% endif %}">All Levels</a>
+        <a href="?level=beginner{% if selected_category %}&category={{ selected_category }}{% endif %}" class="filter-tab {% if selected_level == 'beginner' %}active{% endif %}">Beginner</a>
+        <a href="?level=intermediate{% if selected_category %}&category={{ selected_category }}{% endif %}" class="filter-tab {% if selected_level == 'intermediate' %}active{% endif %}">Intermediate</a>
+        <a href="?level=advanced{% if selected_category %}&category={{ selected_category }}{% endif %}" class="filter-tab {% if selected_level == 'advanced' %}active{% endif %}">Advanced</a>
+        <a href="?level=all{% if selected_category %}&category={{ selected_category }}{% endif %}" class="filter-tab {% if selected_level == 'all' %}active{% endif %}">All Levels</a>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      {% for class in classes %}
+      <a href="{% url 'class_booking_page' class.slug %}" class="class-card">
+        <div class="card-img">
+          {% class_photo class %}
+          <!-- Availability ribbon on card image -->
+          {% with next_session=class.sessions.first %}
+          {% if next_session %}
+          <div class="card-avail-ribbon">
+            {% if next_session.is_full %}
+              <span class="avail-badge avail-full" style="font-size:0.65rem;"><span class="avail-dot dot-full"></span>Full</span>
+            {% elif next_session.is_low_spots %}
+              <span class="avail-badge avail-low" style="font-size:0.65rem;"><span class="avail-dot dot-low"></span>{{ next_session.spots_remaining }} left</span>
+            {% else %}
+              <span class="avail-badge avail-open" style="font-size:0.65rem;"><span class="avail-dot dot-open"></span>Available</span>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% endwith %}
+        </div>
+        <div class="card-body">
+          <div class="card-level">{{ class.get_level_display }} · {{ class.get_category_display }}</div>
+          <div class="card-title">{{ class.name }}</div>
+          <div class="card-meta">
+            {% if class.instructor %}{{ class.instructor.name }} &nbsp;·&nbsp;{% endif %}
+            {{ class.duration_minutes }} min
+          </div>
+          <p style="font-size:0.875rem;color:var(--soft-grey);margin-bottom:1rem;">{{ class.description|truncatechars:90 }}</p>
+          {% if class.prerequisite_note %}
+          <div style="font-size:0.75rem;color:#1976d2;background:#e3f2fd;padding:0.4rem 0.6rem;border-radius:3px;margin-bottom:0.75rem;">📋 {{ class.prerequisite_note|truncatechars:60 }}</div>
+          {% endif %}
+          <div class="card-footer">
+            <span class="card-price">A${{ class.price }}</span>
+            <span class="card-rating">{% with avg=class.avg_rating %}{% if avg > 0 %}⭐ {{ avg }}{% else %}New{% endif %}{% endwith %}</span>
+          </div>
+        </div>
+      </a>
+      {% empty %}
+      <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--soft-grey)">
+        <div style="font-size:3rem;margin-bottom:1rem">🔍</div>
+        <p>No classes match your filters. <a href="{% url 'classes' %}" style="color:var(--sage);">Clear filters</a></p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

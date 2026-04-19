@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Pass Activated! — Sirius Yoga{% endblock %}
+{% block content %}
+
+<div style="background:linear-gradient(135deg,#2c3e2d,#1a2a1b);padding:4rem 2rem;text-align:center;color:white;">
+  <div style="font-size:3.5rem;margin-bottom:1rem;">🎫</div>
+  <h1 style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:300;margin-bottom:0.5rem;">Pass Activated!</h1>
+  <p style="opacity:0.6;font-size:1rem;">Your payment was successful. Your pass is ready to use!</p>
+</div>
+
+<section class="section" style="padding-top:3rem;">
+  <div class="section-inner" style="max-width:620px;">
+    <div style="background:white;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 4px 20px rgba(44,44,44,0.08);">
+
+      <!-- Header -->
+      <div style="background:var(--sage);padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center;">
+        <div style="color:white;">
+          <div style="font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;opacity:0.8;margin-bottom:0.2rem;">Pass Receipt</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:500;">{{ membership.plan.name }}</div>
+        </div>
+        <div style="text-align:right;color:white;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;">A${{ membership.plan.price }}</div>
+          <div style="font-size:0.75rem;opacity:0.7;">Paid ✅</div>
+        </div>
+      </div>
+
+      <div style="padding:1.5rem;">
+        <!-- Pass Details -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+          <div>
+            <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.25rem;">Pass Type</div>
+            <div style="font-weight:500;">{{ membership.plan.get_plan_type_display }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.25rem;">Classes</div>
+            <div style="font-weight:500;">{% if membership.plan.plan_type == 'unlimited' %}Unlimited{% else %}{{ membership.plan.classes_included }}{% endif %}</div>
+          </div>
+          <div>
+            <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.25rem;">Valid From</div>
+            <div style="font-weight:500;">{{ membership.start_date|date:"M j, Y" }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.25rem;">Valid Until</div>
+            <div style="font-weight:500;">{{ membership.end_date|date:"M j, Y" }}</div>
+          </div>
+        </div>
+
+        <!-- Payment Details -->
+        {% if payment %}
+        <div style="background:var(--cream);border-radius:6px;padding:1rem;margin-bottom:1.25rem;">
+          <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.75rem;">Payment Details</div>
+          <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.35rem;">
+            <span style="color:var(--soft-grey);">Transaction ID</span>
+            <span style="font-family:monospace;font-size:0.82rem;font-weight:500;">{{ payment.transaction_id }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.35rem;">
+            <span style="color:var(--soft-grey);">Date Paid</span>
+            <span>{{ payment.created_at|date:"M j, Y g:i A" }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.875rem;margin-bottom:0.35rem;">
+            <span style="color:var(--soft-grey);">Method</span>
+            <span>💳 Card</span>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.6rem;display:flex;justify-content:space-between;font-weight:700;">
+            <span>Amount Paid</span>
+            <span style="color:var(--sage);">A${{ payment.amount }}</span>
+          </div>
+        </div>
+        {% endif %}
+
+        <div style="background:rgba(122,158,126,0.08);border-left:3px solid var(--sage);padding:1rem;border-radius:0 6px 6px 0;margin-bottom:1rem;">
+          <p style="font-size:0.875rem;color:var(--soft-grey);margin:0;line-height:1.7;">
+            📧 A receipt has been sent to <strong>{{ request.user.email }}</strong><br>
+            Your pass is now active. Use it to book any class!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem;">
+      <a href="{% url 'classes' %}" class="btn-primary">Browse Classes 🧘</a>
+      <a href="{% url 'schedule' %}" class="btn-outline" style="color:var(--charcoal);border-color:var(--border);padding:0.9rem 2rem;">View Schedule</a>
+      <a href="{% url 'my_bookings' %}" class="btn-outline" style="color:var(--charcoal);border-color:var(--border);padding:0.9rem 2rem;">My Bookings</a>
+    </div>
+    <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:1rem 1.25rem;margin-top:1.5rem;text-align:center;font-size:0.875rem;color:#1b5e20;">
+      🎫 Your pass is active! When you add a class to cart and go to checkout, your pass will be applied automatically — <strong>no card needed</strong>.
+    </div>
+    <p style="text-align:center;margin-top:1.5rem;font-size:0.875rem;color:var(--soft-grey);">Namaste 🙏 We look forward to seeing you on the mat!</p>
+  </div>
+</section>
+{% endblock %}

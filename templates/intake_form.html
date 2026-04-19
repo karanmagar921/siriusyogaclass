@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}Booking Form — {{ yoga_class.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header" style="padding:3rem 2rem 2rem;">
+  <span style="font-size:0.75rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold);">{{ yoga_class.get_category_display }}</span>
+  <h1>Booking Form</h1>
+  <p>{{ yoga_class.name }} · {{ session.date|date:"l, M j, Y" }} · {{ session.start_time|time:"g:i A" }}</p>
+</div>
+
+<section class="section" style="padding-top:2.5rem;">
+  <div class="section-inner" style="max-width:700px;">
+
+    {% if all_prefilled and not errors %}
+    <!-- ── Pre-filled banner ── -->
+    <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.75rem;">
+      <span style="font-size:1.3rem;">✅</span>
+      <div>
+        <div style="font-weight:600;color:#1b5e20;font-size:0.9rem;">Your details are pre-filled from your last booking</div>
+        <div style="font-size:0.82rem;color:#2e7d32;">Check everything below and update anything that has changed.</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if errors %}
+    <!-- ── Smart error banner ── -->
+    <div style="background:#fce4ec;border:1px solid #ef9a9a;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;">
+        <span style="font-size:1.1rem;">⚠️</span>
+        <strong style="color:#c62828;font-size:0.9rem;">Please fix the following before continuing:</strong>
+      </div>
+      <ul style="margin:0 0 0 1.5rem;padding:0;color:#c62828;font-size:0.85rem;line-height:1.8;">
+        {% if missing_fields %}
+        <li>Missing required fields: <strong>{{ missing_fields|join:", " }}</strong></li>
+        {% endif %}
+        {% for field, msg in invalid_fields.items %}
+        <li>{{ field|title|cut:"_" }}: {{ msg }}</li>
+        {% endfor %}
+        {% if 'medical_waiver_agreed' in errors %}
+        <li>You must agree to the medical waiver to proceed.</li>
+        {% endif %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate id="intakeForm">
+      {% csrf_token %}
+
+      <!-- ── Personal Details ── -->
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:2rem;margin-bottom:1.5rem;">
+        <h3 style="font-size:1rem;font-weight:600;margin-bottom:1.5rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border);">Personal Details</h3>
+
+        <div class="form-row" style="margin-bottom:1.25rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">First Name <span style="color:#c62828">*</span></label>
+            <input type="text" name="first_name"
+              class="form-input {% if 'first_name' in errors %}input-error{% endif %}"
+              value="{{ post_data.first_name|default:prefill.first_name }}"
+              placeholder="First Name" required pattern="[A-Za-z\s\-]+" title="Letters only">
+            {% if 'first_name' in errors %}<div class="field-error">⚠️ {{ validation_messages.first_name }}</div>{% endif %}
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Last Name <span style="color:#c62828">*</span></label>
+            <input type="text" name="last_name"
+              class="form-input {% if 'last_name' in errors %}input-error{% endif %}"
+              value="{{ post_data.last_name|default:prefill.last_name }}"
+              placeholder="Last Name" required pattern="[A-Za-z\s\-]+" title="Letters only">
+            {% if 'last_name' in errors %}<div class="field-error">⚠️ {{ validation_messages.last_name }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email <span style="color:#c62828">*</span></label>
+          <input type="email" name="email"
+            class="form-input {% if 'email' in errors %}input-error{% endif %}"
+            value="{{ post_data.email|default:prefill.email }}"
+            placeholder="your@email.com" required>
+          {% if 'email' in errors %}<div class="field-error">⚠️ {{ validation_messages.email }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contact Number <span style="color:#c62828">*</span></label>
+          <input type="tel" name="phone"
+            class="form-input {% if 'phone' in errors %}input-error{% endif %}"
+            value="{{ post_data.phone|default:phone_default }}"
+            placeholder="+61 400 000 000" required
+            pattern="[0-9+\-\s().]+" title="Digits only — no letters">
+          {% if 'phone' in errors %}
+          <div class="field-error">⚠️ {% if 'phone_invalid' in errors %}Digits only — no letters allowed.{% else %}Phone is required.{% endif %}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ── Address ── -->
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:2rem;margin-bottom:1.5rem;">
+        <h3 style="font-size:1rem;font-weight:600;margin-bottom:1.5rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border);">Address</h3>
+
+        <div class="form-group">
+          <label class="form-label">Country</label>
+          <select name="country" class="form-input">
+            {% with cv=post_data.country|default:prefill.country %}
+            <option value="Australia" {% if cv == 'Australia' or not cv %}selected{% endif %}>Australia</option>
+            <option value="New Zealand" {% if cv == 'New Zealand' %}selected{% endif %}>New Zealand</option>
+            <option value="United Kingdom" {% if cv == 'United Kingdom' %}selected{% endif %}>United Kingdom</option>
+            <option value="United States" {% if cv == 'United States' %}selected{% endif %}>United States</option>
+            <option value="Other" {% if cv == 'Other' %}selected{% endif %}>Other</option>
+            {% endwith %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address Line 1 <span style="color:#c62828">*</span></label>
+          <input type="text" name="address_line1"
+            class="form-input {% if 'address_line1' in errors %}input-error{% endif %}"
+            value="{{ post_data.address_line1|default:prefill.address_line1 }}"
+            placeholder="Street address" required>
+          {% if 'address_line1' in errors %}<div class="field-error">⚠️ Street address is required.</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address Line 2 <span style="color:var(--soft-grey);font-size:0.75rem;font-weight:400;">(optional)</span></label>
+          <input type="text" name="address_line2" class="form-input"
+            value="{{ post_data.address_line2|default:prefill.address_line2 }}"
+            placeholder="Apartment, unit, etc.">
+        </div>
+
+        <div class="form-row" style="grid-template-columns:1fr 1fr 120px;gap:1rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Suburb <span style="color:#c62828">*</span></label>
+            <input type="text" name="suburb"
+              class="form-input {% if 'suburb' in errors %}input-error{% endif %}"
+              value="{{ post_data.suburb|default:prefill.suburb }}"
+              placeholder="Suburb" required>
+            {% if 'suburb' in errors %}<div class="field-error">⚠️ Required.</div>{% endif %}
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">State <span style="color:#c62828">*</span></label>
+            <select name="state" class="form-input {% if 'state' in errors %}input-error{% endif %}">
+              <option value="">Select…</option>
+              {% with sv=post_data.state|default:prefill.state %}
+              {% for s in states %}
+              <option value="{{ s }}" {% if sv == s %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+              {% endwith %}
+            </select>
+            {% if 'state' in errors %}<div class="field-error">⚠️ Required.</div>{% endif %}
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Postcode <span style="color:#c62828">*</span></label>
+            <input type="text" name="postcode"
+              class="form-input {% if 'postcode' in errors %}input-error{% endif %}"
+              value="{{ post_data.postcode|default:prefill.postcode }}"
+              placeholder="5000" maxlength="10" required pattern="[0-9]+" title="Digits only">
+            {% if 'postcode' in errors %}<div class="field-error">⚠️ {% if validation_messages.postcode %}{{ validation_messages.postcode }}{% else %}Required.{% endif %}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- ── About You ── -->
+      <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:2rem;margin-bottom:1.5rem;">
+        <h3 style="font-size:1rem;font-weight:600;margin-bottom:1.5rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border);">About You</h3>
+
+        <div class="form-group">
+          <label class="form-label">How did you find us?</label>
+          <select name="how_found" class="form-input">
+            {% with hv=post_data.how_found|default:prefill.how_found %}
+            <option value="">Select an option</option>
+            <option value="google"    {% if hv == 'google' %}selected{% endif %}>Google / Search Engine</option>
+            <option value="facebook"  {% if hv == 'facebook' %}selected{% endif %}>Facebook</option>
+            <option value="instagram" {% if hv == 'instagram' %}selected{% endif %}>Instagram</option>
+            <option value="friend"    {% if hv == 'friend' %}selected{% endif %}>Friend / Word of Mouth</option>
+            <option value="returning" {% if hv == 'returning' %}selected{% endif %}>Returning Student</option>
+            <option value="other"     {% if hv == 'other' %}selected{% endif %}>Other</option>
+            {% endwith %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Experience Level <span style="color:#c62828">*</span></label>
+          <p style="font-size:0.8rem;color:var(--soft-grey);margin-bottom:0.75rem;">Have you done yoga before?</p>
+          {% with ev=post_data.experience_level|default:prefill.experience_level %}
+          <div style="display:flex;flex-direction:column;gap:0.6rem;" id="levelRadios">
+            {% for val, label in levels %}
+            <label class="level-option {% if ev == val %}level-selected{% endif %}"
+              style="display:flex;align-items:center;gap:0.75rem;cursor:pointer;padding:0.65rem 0.85rem;border:1px solid {% if ev == val %}var(--sage){% else %}var(--border){% endif %};border-radius:4px;background:{% if ev == val %}rgba(122,158,126,0.06){% else %}white{% endif %};transition:all 0.15s;">
+              <input type="radio" name="experience_level" value="{{ val }}"
+                {% if ev == val or not ev and val == 'beginner' %}checked{% endif %}
+                style="accent-color:var(--sage);width:16px;height:16px;">
+              <span style="font-size:0.9rem;">{{ label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          {% endwith %}
+          {% if 'experience_level' in errors %}<div class="field-error" style="margin-top:0.4rem;">⚠️ Please select your experience level.</div>{% endif %}
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Additional Notes <span style="color:var(--soft-grey);font-size:0.75rem;font-weight:400;">(optional)</span></label>
+          <textarea name="notes" class="form-input" rows="3"
+            placeholder="Any injuries, health conditions, or special requests the instructor should know about…">{{ post_data.notes|default:prefill.notes }}</textarea>
+        </div>
+      </div>
+
+      <!-- ── Medical Waiver ── -->
+      <div style="background:white;border:1px solid {% if 'medical_waiver_agreed' in errors %}#c62828{% else %}var(--border){% endif %};border-radius:8px;padding:2rem;margin-bottom:1.5rem;">
+        <h3 style="font-size:0.8rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:1rem;">Medical Form & Waiver</h3>
+        <p style="font-size:0.875rem;color:var(--soft-grey);line-height:1.7;margin-bottom:1rem;">
+          All students must agree to our health & waiver conditions before attending.
+        </p>
+        <label style="display:flex;align-items:flex-start;gap:0.75rem;cursor:pointer;">
+          <input type="checkbox" name="medical_waiver_agreed" value="1"
+            {% if post_data.medical_waiver_agreed or waiver_auto_checked %}checked{% endif %}
+            style="width:18px;height:18px;margin-top:2px;accent-color:var(--sage);flex-shrink:0;">
+          <span style="font-size:0.875rem;line-height:1.6;">
+            <strong>Yes, I have read and agree to the medical &amp; waiver conditions.</strong>
+            I confirm that I am physically fit to participate and will inform the instructor of any health issues.
+          </span>
+        </label>
+        {% if 'medical_waiver_agreed' in errors %}
+        <div class="field-error" style="margin-top:0.5rem;">⚠️ You must agree to the waiver to proceed.</div>
+        {% endif %}
+      </div>
+
+      <!-- ── Order Summary ── -->
+      <div style="background:var(--cream);border-radius:8px;padding:1.25rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:500;">{{ yoga_class.name }}</div>
+          <div style="font-size:0.8rem;color:var(--soft-grey);">{{ session.date|date:"M j, Y" }} · {{ session.start_time|time:"g:i A" }}</div>
+        </div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--sage);">A${{ session.effective_price }}</div>
+      </div>
+
+      <button type="submit" class="btn-primary btn-full" style="padding:1.1rem;font-size:1rem;letter-spacing:0.08em;">
+        ADD TO CART →
+      </button>
+      <a href="{% url 'class_booking_page' yoga_class.slug %}" style="display:block;text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--soft-grey);">← Back to class</a>
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.field-error { color: #c62828; font-size: 0.78rem; margin-top: 0.3rem; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Highlight selected radio
+function updateLevelStyles() {
+  document.querySelectorAll('.level-option').forEach(label => {
+    const checked = label.querySelector('input').checked;
+    label.style.borderColor = checked ? 'var(--sage)' : 'var(--border)';
+    label.style.background  = checked ? 'rgba(122,158,126,0.06)' : 'white';
+  });
+}
+document.querySelectorAll('.level-option input').forEach(r => {
+  r.addEventListener('change', updateLevelStyles);
+});
+updateLevelStyles();
+
+// Live phone validation
+document.querySelector('[name="phone"]')?.addEventListener('input', function() {
+  if (/[a-zA-Z]/.test(this.value)) this.classList.add('input-error');
+  else this.classList.remove('input-error');
+});
+
+// Live postcode — digits only
+document.querySelector('[name="postcode"]')?.addEventListener('input', function() {
+  if (this.value && !/^\d+$/.test(this.value)) this.classList.add('input-error');
+  else this.classList.remove('input-error');
+});
+
+// Live name — letters only
+['first_name','last_name'].forEach(f => {
+  document.querySelector(`[name="${f}"]`)?.addEventListener('input', function() {
+    if (this.value && /[^A-Za-z\s\-]/.test(this.value)) this.classList.add('input-error');
+    else this.classList.remove('input-error');
+  });
+});
+</script>
+{% endblock %}

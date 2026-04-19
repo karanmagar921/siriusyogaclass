@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Payment — Sirius Yoga{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Complete Payment</h1>
+  <p>Secure checkout for your yoga session</p>
+</div>
+<section class="section">
+  <div class="section-inner" style="max-width:900px;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start;">
+    <!-- Order Summary -->
+    <div>
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:1.5rem;">Order Summary</h3>
+      <div style="background:var(--cream);border-radius:4px;padding:1.5rem;margin-bottom:1.5rem;">
+        <div style="font-weight:500;font-size:1.1rem;margin-bottom:0.5rem">{{ booking.yoga_class.name }}</div>
+        <div style="font-size:0.875rem;color:var(--soft-grey);margin-bottom:1rem">with {{ booking.yoga_class.instructor }} &nbsp;·&nbsp; {{ booking.yoga_class.duration_minutes }} min</div>
+        <div style="font-size:0.875rem;color:var(--soft-grey)">📅 Date: {{ booking.booking_date }}</div>
+        {% if booking.schedule %}<div style="font-size:0.875rem;color:var(--soft-grey)">🕐 Time: {{ booking.schedule.day_of_week }} {{ booking.schedule.start_time|time:"g:i A" }}</div>{% endif %}
+        <div style="border-top:1px solid var(--border);margin-top:1rem;padding-top:1rem;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-weight:500;">Total</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--sage)">A${{ booking.yoga_class.price }}</span>
+        </div>
+      </div>
+      <div style="padding:1rem;background:#e8f5e9;border-radius:4px;font-size:0.8rem;color:#2e7d32;">
+        🔒 Your payment information is encrypted and secure.
+      </div>
+    </div>
+
+    <!-- Payment Form -->
+    <div>
+      <div class="payment-card-preview">
+        <div class="card-chip"></div>
+        <div class="card-number-preview" id="cardNumPreview">•••• •••• •••• ••••</div>
+        <div class="card-details-preview">
+          <span id="cardNamePreview">FULL NAME</span>
+          <span id="cardExpPreview">MM/YY</span>
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'process_payment' booking.pk %}">
+        {% csrf_token %}
+        <!-- ── TEST MODE BANNER ── -->
+        <div style="background:#fff8e1;border:1px solid var(--gold);border-radius:4px;padding:1rem;margin-bottom:1.5rem;font-size:0.875rem;color:#7c5d0a;">
+          🧪 <strong>Test Mode:</strong> Card validation is bypassed. Click the button below to simulate a successful payment.
+        </div>
+        <div class="form-group"><label class="form-label">Name on Card</label><input type="text" name="card_name" class="form-input" placeholder="Test User" value="Test User"></div>
+        <div class="form-group"><label class="form-label">Card Number</label><input type="text" name="card_number" class="form-input" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242" id="cardNum"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Expiry</label><input type="text" name="expiry" class="form-input" placeholder="12/26" value="12/26" id="cardExp"></div>
+          <div class="form-group"><label class="form-label">CVV</label><input type="password" name="cvv" class="form-input" placeholder="123" value="123"></div>
+        </div>
+        <button type="submit" class="btn-primary btn-full" style="margin-top:0.5rem">
+          ✅ Confirm Test Payment — A${{ booking.yoga_class.price }} 🔒
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('cardNum').addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g, '').substring(0,16);
+  e.target.value = v.replace(/(.{4})/g, '$1 ').trim();
+  document.getElementById('cardNumPreview').textContent = (v + '•'.repeat(16 - v.length)).replace(/(.{4})/g, '$1 ').trim();
+});
+document.getElementById('cardName').addEventListener('input', e => {
+  document.getElementById('cardNamePreview').textContent = e.target.value.toUpperCase() || 'FULL NAME';
+});
+document.getElementById('cardExp').addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g, '');
+  if (v.length >= 2) v = v.substring(0,2) + '/' + v.substring(2,4);
+  e.target.value = v;
+  document.getElementById('cardExpPreview').textContent = v || 'MM/YY';
+});
+</script>
+{% endblock %}

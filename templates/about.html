@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}About — Sirius Yoga{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>About Sirius Yoga</h1>
+  <p>Our story, our mission, our passion</p>
+</div>
+
+<section class="section">
+  <div class="section-inner" style="max-width:800px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;margin-bottom:4rem;">
+      <div>
+        <span class="section-eyebrow">Our Story</span>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:400;margin-bottom:1rem;line-height:1.2">A Studio Born from <em>Passion</em></h2>
+        <p style="color:var(--soft-grey);line-height:1.9;margin-bottom:1rem;">Sirius Yoga was founded with a single belief: that yoga is for everyone. Whether you're stepping onto the mat for the first time or have been practicing for decades, our studio is your sanctuary.</p>
+        <p style="color:var(--soft-grey);line-height:1.9;">Named after Sirius — the brightest star in the night sky — we guide our students toward their own radiant potential.</p>
+      </div>
+      <div style="background:linear-gradient(135deg,var(--sage),var(--sage-dark));border-radius:4px;height:300px;display:flex;align-items:center;justify-content:center;font-size:6rem;">🌟</div>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom:4rem;">
+      <div class="stat-card"><div class="stat-number">10+</div><div class="stat-label">Years Teaching</div></div>
+      <div class="stat-card"><div class="stat-number">500+</div><div class="stat-label">Students</div></div>
+      <div class="stat-card"><div class="stat-number">12+</div><div class="stat-label">Class Styles</div></div>
+      <div class="stat-card"><div class="stat-number">∞</div><div class="stat-label">Possibilities</div></div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:4rem;">
+      <span class="section-eyebrow">Our Values</span>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:400;margin-bottom:2rem;">What We Believe In</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;">
+        <div style="padding:2rem;background:var(--cream);border-radius:4px;">
+          <div style="font-size:2.5rem;margin-bottom:1rem">🤝</div>
+          <div style="font-weight:500;margin-bottom:0.5rem">Community</div>
+          <p style="font-size:0.875rem;color:var(--soft-grey)">A welcoming space for all bodies, backgrounds, and experience levels.</p>
+        </div>
+        <div style="padding:2rem;background:var(--cream);border-radius:4px;">
+          <div style="font-size:2.5rem;margin-bottom:1rem">🌱</div>
+          <div style="font-weight:500;margin-bottom:0.5rem">Growth</div>
+          <p style="font-size:0.875rem;color:var(--soft-grey)">Continuous learning, both on and off the mat.</p>
+        </div>
+        <div style="padding:2rem;background:var(--cream);border-radius:4px;">
+          <div style="font-size:2.5rem;margin-bottom:1rem">☮️</div>
+          <div style="font-weight:500;margin-bottom:0.5rem">Peace</div>
+          <p style="font-size:0.875rem;color:var(--soft-grey)">Cultivating stillness in a busy world.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:3rem;background:linear-gradient(135deg,var(--sage-dark),#1a2a1b);border-radius:4px;color:white;">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;margin-bottom:1rem">Ready to Join Our Community?</h3>
+      <a href="{% url 'classes' %}" class="btn-primary">Explore Classes</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

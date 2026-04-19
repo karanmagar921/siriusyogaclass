@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}{{ yoga_class.name }} — Sirius Yoga{% endblock %}
+{% block content %}
+
+<!-- Breadcrumb — same style as Hills Yoga -->
+<div style="background:white;border-bottom:1px solid #f0f0f0;padding:1rem 2rem;">
+  <div style="max-width:1200px;margin:0 auto;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:#999;display:flex;align-items:center;gap:0.5rem;">
+    <a href="{% url 'classes' %}" style="color:#999;text-decoration:none;">Classes &amp; Bookings</a>
+    <span>›</span>
+    <span style="color:#333;font-weight:600;">{{ yoga_class.name }}</span>
+  </div>
+</div>
+
+<div style="background:white;padding:2.5rem 2rem 5rem;">
+  <div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:5rem;align-items:start;">
+
+    <!-- ── LEFT: Large Photo ── -->
+    <div>
+      <div style="width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:2px;background:#f0ede8;display:flex;align-items:center;justify-content:center;">
+        {% if yoga_class.photo_url or yoga_class.image %}
+          {% class_photo yoga_class %}
+        {% else %}
+          <span style="font-size:6rem;">🧘</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Product Panel ── -->
+    <div style="padding-top:0.5rem;">
+
+      <!-- Class Name — purple, all-caps, bold -->
+      <h1 style="font-family:'Jost',sans-serif;font-size:1.9rem;font-weight:700;color:#7b2fa0;letter-spacing:0.04em;text-transform:uppercase;line-height:1.2;margin-bottom:0.75rem;">
+        {{ yoga_class.name }}
+      </h1>
+
+      <!-- Price -->
+      <p style="font-size:1.1rem;color:#333;margin-bottom:1.5rem;font-weight:400;">
+        A${{ yoga_class.price }}
+      </p>
+
+      <!-- Description -->
+      <p style="font-size:0.925rem;color:#555;line-height:1.85;margin-bottom:1rem;">
+        {{ yoga_class.description }}
+      </p>
+
+      <!-- Bullet highlights -->
+      <ul style="margin:0 0 2rem 1.25rem;padding:0;">
+        <li style="font-size:0.9rem;color:#555;line-height:1.8;">
+          {{ yoga_class.get_level_display }} · {{ yoga_class.get_category_display }} · {{ yoga_class.duration_minutes }} min
+        </li>
+        {% if yoga_class.instructor %}
+        <li style="font-size:0.9rem;color:#555;line-height:1.8;">Instructor: {{ yoga_class.instructor.name }}</li>
+        {% endif %}
+        {% if yoga_class.prerequisite_note %}
+        <li style="font-size:0.9rem;color:#555;line-height:1.8;">{{ yoga_class.prerequisite_note }}</li>
+        {% endif %}
+      </ul>
+
+      {% if sessions %}
+
+      <!-- Session Date selector -->
+      <div style="margin-bottom:1.5rem;">
+        <label style="display:block;font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;color:#888;margin-bottom:0.6rem;">
+          Course Start Date:
+        </label>
+        <div style="position:relative;display:inline-block;width:100%;">
+          <select id="sessionSelect" onchange="updatePanel(this)"
+            style="width:100%;padding:0.85rem 2.5rem 0.85rem 1rem;border:1.5px solid #333;border-radius:2px;font-family:'Jost',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:white;appearance:none;cursor:pointer;color:#333;">
+            <option value="">— Choose a session —</option>
+            {% for session in sessions %}
+            <option value="{{ session.pk }}"
+              data-full="{{ session.is_full|yesno:'true,false' }}"
+              data-unavail="{{ session.is_unavailable|yesno:'true,false' }}"
+              data-past="{{ session.is_past|yesno:'true,false' }}"
+              data-spots="{{ session.spots_remaining }}"
+              data-max="{{ session.effective_max }}"
+              data-price="{{ session.effective_price }}"
+              {% if session.pk in cart_session_ids %}data-incart="true"{% endif %}
+              {% if session.is_full or session.is_unavailable or session.is_past %}disabled style="color:#999;font-style:italic;"{% endif %}>
+              {{ session.date|date:"l jS, F" }}, {{ session.start_time|time:"g.iA" }}–{{ session.end_time|time:"g.iA" }}
+              {% if session.is_unavailable %} — 🚫 UNAVAILABLE
+              {% elif session.is_past %} — (Ended)
+              {% elif session.pk in cart_session_ids %} — ✓ In Cart
+              {% elif session.is_full %} — FULL ({{ session.waitlist_count }} waiting)
+              {% elif session.is_low_spots %} — ⚡ Only {{ session.spots_remaining }} left!
+              {% else %} — {{ session.spots_remaining }} spots open
+              {% endif %}
+            </option>
+            {% endfor %}
+          </select>
+          <svg style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);pointer-events:none;" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="#333" stroke-width="1.5" fill="none"/></svg>
+        </div>
+      </div>
+
+      <!-- Availability Info (shown after selection) -->
+      <div id="availInfo" style="display:none;margin-bottom:1.5rem;padding:0.75rem 1rem;background:#f9f7f4;border-left:3px solid #7b2fa0;border-radius:0 3px 3px 0;font-size:0.82rem;color:#555;"></div>
+
+      <!-- Quantity -->
+      <div style="margin-bottom:2rem;">
+        <label style="display:block;font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;color:#888;margin-bottom:0.6rem;">
+          Quantity:
+        </label>
+        <div style="display:flex;align-items:center;border:1.5px solid #ccc;border-radius:2px;width:fit-content;overflow:hidden;">
+          <button type="button" onclick="changeQty(-1)"
+            style="width:36px;height:42px;background:none;border:none;border-right:1px solid #ccc;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+          <input type="number" id="qtyInput" value="1" min="1" max="10" readonly
+            style="width:52px;height:42px;border:none;text-align:center;font-size:0.95rem;font-family:'Jost',sans-serif;background:white;">
+          <button type="button" onclick="changeQty(1)"
+            style="width:36px;height:42px;background:none;border:none;border-left:1px solid #ccc;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+        </div>
+      </div>
+
+      <!-- ADD TO CART button — pill shape, black border, white bg, uppercase -->
+      {% if user.is_authenticated %}
+      <button id="addToCartBtn" onclick="handleAddToCart()"
+        style="width:100%;padding:1rem 2rem;border:2px solid #222;border-radius:50px;background:white;font-family:'Jost',sans-serif;font-size:0.82rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;color:#222;transition:all 0.2s;margin-bottom:1rem;"
+        onmouseover="this.style.background='#222';this.style.color='white';"
+        onmouseout="this.style.background='white';this.style.color='#222';">
+        ADD TO CART
+      </button>
+      {% else %}
+      <a href="{% url 'login' %}?next={{ request.path }}"
+        style="display:block;width:100%;padding:1rem 2rem;border:2px solid #222;border-radius:50px;background:white;font-family:'Jost',sans-serif;font-size:0.82rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;color:#222;text-align:center;text-decoration:none;margin-bottom:1rem;box-sizing:border-box;transition:all 0.2s;"
+        onmouseover="this.style.background='#222';this.style.color='white';"
+        onmouseout="this.style.background='white';this.style.color='#222';">
+        LOGIN TO BOOK
+      </a>
+      {% endif %}
+
+      {% else %}
+      <!-- No sessions -->
+      <div style="padding:1.5rem;background:#f9f7f4;border-radius:4px;text-align:center;color:#888;font-size:0.9rem;margin-bottom:1.5rem;">
+        No upcoming sessions. <a href="{% url 'contact' %}" style="color:#7b2fa0;">Request one →</a>
+      </div>
+      {% endif %}
+
+      <!-- Share icons -->
+      <div style="display:flex;gap:1rem;align-items:center;margin-top:0.5rem;">
+        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank"
+          style="color:#222;text-decoration:none;display:flex;align-items:center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ yoga_class.name|urlencode }}" target="_blank"
+          style="color:#222;text-decoration:none;display:flex;align-items:center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <button onclick="navigator.clipboard.writeText(window.location.href);this.title='Copied!'"
+          title="Copy link" style="background:none;border:none;cursor:pointer;color:#222;display:flex;align-items:center;padding:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        </button>
+      </div>
+
+      <!-- Cancellation note -->
+      <p style="font-size:0.78rem;color:#aaa;margin-top:1.5rem;line-height:1.7;">
+        Free cancellation up to {{ yoga_class.cancellation_hours }} hours before class. Membership passes accepted.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Below fold: Description + Reviews ── -->
+  <div style="max-width:1200px;margin:4rem auto 0;display:grid;grid-template-columns:1fr 1fr;gap:4rem;">
+
+    <!-- About -->
+    <div>
+      <h2 style="font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;font-weight:600;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0f0;">About This Class</h2>
+      {% if yoga_class.instructor %}
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding:1rem;background:#faf9f7;border-radius:4px;">
+        <div style="width:48px;height:48px;border-radius:50%;overflow:hidden;flex-shrink:0;background:#e8e4de;display:flex;align-items:center;justify-content:center;">
+          {% instructor_photo yoga_class.instructor "48px" %}
+        </div>
+        <div>
+          <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:#aaa;">Instructor</div>
+          <div style="font-weight:600;font-size:0.9rem;">{{ yoga_class.instructor.name }}</div>
+          <a href="{% url 'instructor_detail' yoga_class.instructor.pk %}" style="font-size:0.78rem;color:#7b2fa0;text-decoration:none;">View profile →</a>
+        </div>
+      </div>
+      {% endif %}
+      <div style="border:1px solid #f0f0f0;border-radius:4px;padding:1rem;margin-bottom:1rem;">
+        <div style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:#aaa;margin-bottom:0.4rem;">What to Bring</div>
+        <p style="font-size:0.875rem;color:#666;line-height:1.7;margin:0;">{{ yoga_class.what_to_bring }}</p>
+      </div>
+      {% if yoga_class.prerequisite_note %}
+      <div style="border-left:3px solid #7b2fa0;padding:0.75rem 1rem;background:#faf7ff;border-radius:0 4px 4px 0;font-size:0.875rem;color:#555;margin-bottom:1rem;">
+        📋 {{ yoga_class.prerequisite_note }}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Reviews -->
+    <div>
+      <h2 style="font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;font-weight:600;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0f0;">
+        Reviews{% if yoga_class.avg_rating > 0 %} <span style="color:#7b2fa0;font-size:0.85rem;letter-spacing:0;">⭐ {{ yoga_class.avg_rating }}</span>{% endif %}
+      </h2>
+
+      {% if review_form %}
+      <div style="background:#faf9f7;border-radius:4px;padding:1.25rem;margin-bottom:1.5rem;">
+        <form method="post" action="{% url 'submit_review' yoga_class.pk %}">
+          {% csrf_token %}
+          <div class="stars" id="starRating" style="margin-bottom:0.75rem;">
+            {% for i in "12345" %}<span class="star" data-val="{{ forloop.counter }}" style="font-size:1.4rem;cursor:pointer;color:#ddd;">★</span>{% endfor %}
+          </div>
+          <input type="hidden" name="rating" id="ratingInput" value="0">
+          <textarea name="comment" class="form-input" rows="3" placeholder="Share your experience…" required style="margin-bottom:0.75rem;"></textarea>
+          <button type="submit" id="reviewBtn" disabled
+            style="padding:0.6rem 1.5rem;border:2px solid #222;border-radius:50px;background:white;font-family:'Jost',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;">
+            SUBMIT REVIEW
+          </button>
+        </form>
+      </div>
+      {% elif not user.is_authenticated %}
+      <p style="font-size:0.875rem;color:#999;margin-bottom:1rem;"><a href="{% url 'login' %}" style="color:#7b2fa0;">Log in</a> to leave a review.</p>
+      {% endif %}
+
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        {% for review in reviews %}
+        <div style="border-bottom:1px solid #f0f0f0;padding-bottom:1rem;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
+            <span style="font-weight:600;font-size:0.875rem;">{{ review.user.get_full_name|default:review.user.username }}</span>
+            <span style="color:#f0a500;font-size:0.85rem;">{% for i in "12345" %}{% if forloop.counter|lte:review.rating %}★{% endif %}{% endfor %}</span>
+          </div>
+          <p style="font-size:0.875rem;color:#666;line-height:1.7;margin:0;">{{ review.comment }}</p>
+          {% if review.owner_reply %}
+          <div style="margin-top:0.6rem;padding:0.6rem 0.85rem;background:#faf7ff;border-left:3px solid #7b2fa0;border-radius:0 3px 3px 0;font-size:0.82rem;color:#555;">
+            <strong style="color:#7b2fa0;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;">Studio:</strong> {{ review.owner_reply }}
+          </div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <p style="color:#aaa;font-size:0.875rem;">No reviews yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Classes -->
+  {% if related %}
+  <div style="max-width:1200px;margin:3rem auto 0;">
+    <h2 style="font-size:1rem;letter-spacing:0.15em;text-transform:uppercase;font-weight:600;margin-bottom:1.5rem;padding-bottom:0.75rem;border-bottom:1px solid #f0f0f0;">You Might Also Like</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.5rem;">
+      {% for rc in related %}
+      <a href="{% url 'class_booking_page' rc.slug %}" style="text-decoration:none;color:inherit;">
+        <div style="aspect-ratio:3/2;overflow:hidden;border-radius:2px;background:#f0ede8;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:center;">
+          {% class_photo rc %}
+        </div>
+        <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:#7b2fa0;margin-bottom:0.2rem;">{{ rc.get_category_display }}</div>
+        <div style="font-weight:600;font-size:0.9rem;color:#333;">{{ rc.name }}</div>
+        <div style="font-size:0.85rem;color:#888;margin-top:0.15rem;">A${{ rc.price }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+let selectedPk = null;
+
+function updatePanel(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const info = document.getElementById('availInfo');
+  if (!opt.value) { info.style.display = 'none'; selectedPk = null; return; }
+  selectedPk = opt.value;
+
+  const spots   = parseInt(opt.dataset.spots) || 0;
+  const max     = parseInt(opt.dataset.max)   || 1;
+  const full    = opt.dataset.full    === 'true';
+  const unavail = opt.dataset.unavail === 'true';
+  const past    = opt.dataset.past    === 'true';
+  const inCart  = opt.dataset.incart  === 'true';
+  const btn = document.getElementById('addToCartBtn');
+
+  let msg = '';
+  if (unavail) {
+    msg = '🚫 This session is not available for booking.';
+    if (btn) { btn.disabled = true; btn.style.opacity='0.4'; btn.style.cursor='not-allowed'; }
+  } else if (past) {
+    msg = '⛔ This session has already ended.';
+    if (btn) { btn.disabled = true; btn.style.opacity='0.4'; btn.style.cursor='not-allowed'; }
+  } else if (inCart) {
+    msg = '✅ This session is already in your cart.';
+    if (btn) { btn.disabled = false; btn.style.opacity='1'; btn.style.cursor='pointer'; btn.textContent = 'VIEW CART'; btn.onclick = () => window.location.href = '{% url "cart" %}'; }
+  } else if (full) {
+    msg = '❌ This session is full. <a href="/session/' + opt.value + '/" style="color:#7b2fa0;">Join waitlist →</a>';
+    if (btn) { btn.disabled = false; btn.style.opacity='1'; btn.textContent = 'JOIN WAITLIST'; btn.onclick = () => window.location.href = '/session/' + opt.value + '/'; }
+  } else {
+    msg = `✅ ${spots} of ${max} spots available.`;
+    document.getElementById('qtyInput').max = spots;
+    if (btn) { btn.disabled = false; btn.style.opacity='1'; btn.style.cursor='pointer'; btn.textContent = 'ADD TO CART'; btn.onclick = handleAddToCart; }
+  }
+  info.innerHTML = msg;
+  info.style.display = 'block';
+}
+
+function changeQty(d) {
+  const inp = document.getElementById('qtyInput');
+  inp.value = Math.max(1, Math.min(parseInt(inp.max) || 10, parseInt(inp.value) + d));
+}
+
+function handleAddToCart() {
+  if (!selectedPk) { alert('Please select a session date first.'); return; }
+  window.location.href = '/session/' + selectedPk + '/intake/';
+}
+
+// Stars
+const stars = document.querySelectorAll('.star');
+const ratingInput = document.getElementById('ratingInput');
+const reviewBtn   = document.getElementById('reviewBtn');
+stars.forEach(s => {
+  s.addEventListener('mouseover', () => stars.forEach((st,i) => { st.style.color = i <= parseInt(s.dataset.val)-1 ? '#f0a500' : '#ddd'; }));
+  s.addEventListener('click', () => {
+    const v = parseInt(s.dataset.val);
+    if (ratingInput) ratingInput.value = v;
+    stars.forEach((st,i) => { st.style.color = i < v ? '#f0a500' : '#ddd'; });
+    if (reviewBtn) reviewBtn.disabled = false;
+  });
+});
+document.querySelector('.stars')?.addEventListener('mouseleave', () => {
+  const v = parseInt(ratingInput?.value || 0);
+  stars.forEach((st,i) => { st.style.color = i < v ? '#f0a500' : '#ddd'; });
+});
+</script>
+{% endblock %}

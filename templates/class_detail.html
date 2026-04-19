@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load yoga_extras %}
+{% block title %}{{ yoga_class.name }} — Sirius Yoga{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <span style="font-size:0.75rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold);">{{ yoga_class.get_level_display }} · {{ yoga_class.get_category_display }}</span>
+  <h1>{{ yoga_class.name }}</h1>
+  {% if yoga_class.instructor %}<p>with {{ yoga_class.instructor.name }}</p>{% endif %}
+</div>
+
+<section class="section">
+  <div class="section-inner">
+    <div class="detail-grid">
+      <!-- LEFT -->
+      <div>
+        {% if yoga_class.image or yoga_class.photo_url %}
+        <div style="width:100%;max-height:380px;overflow:hidden;border-radius:4px;margin-bottom:2rem;">{% class_photo yoga_class %}</div>
+        {% endif %}
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;">
+          <div style="background:var(--cream);padding:1rem;border-radius:4px;text-align:center;"><div style="font-size:1.5rem">⏱️</div><div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--soft-grey);margin-top:0.4rem">Duration</div><div style="font-weight:500;font-size:0.9rem">{{ yoga_class.duration_minutes }} min</div></div>
+          <div style="background:var(--cream);padding:1rem;border-radius:4px;text-align:center;"><div style="font-size:1.5rem">👥</div><div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--soft-grey);margin-top:0.4rem">Max Size</div><div style="font-weight:500;font-size:0.9rem">{{ yoga_class.max_participants }}</div></div>
+          <div style="background:var(--cream);padding:1rem;border-radius:4px;text-align:center;"><div style="font-size:1.5rem">📊</div><div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--soft-grey);margin-top:0.4rem">Level</div><div style="font-weight:500;font-size:0.9rem">{{ yoga_class.get_level_display }}</div></div>
+        </div>
+
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:0.75rem;">About This Class</h3>
+        <p style="color:var(--soft-grey);line-height:1.9;margin-bottom:1.5rem;">{{ yoga_class.description }}</p>
+
+        {% if yoga_class.prerequisite_note %}
+        <div style="background:#e3f2fd;border-left:3px solid #1976d2;padding:1rem;border-radius:0 4px 4px 0;margin-bottom:1.5rem;font-size:0.875rem;color:#0d47a1;">
+          📋 <strong>Prerequisites:</strong> {{ yoga_class.prerequisite_note }}
+        </div>
+        {% endif %}
+
+        {% if yoga_class.instructor %}
+        <div style="display:flex;gap:1.25rem;align-items:center;background:var(--cream);padding:1.25rem;border-radius:4px;margin-bottom:2rem;">
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--sage);display:flex;align-items:center;justify-content:center;color:white;font-size:1.3rem;flex-shrink:0;overflow:hidden;">
+            {% instructor_photo yoga_class.instructor "56px" %}
+          </div>
+          <div>
+            <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--soft-grey);">Instructor</div>
+            <div style="font-weight:500;margin-top:0.1rem;">{{ yoga_class.instructor.name }}</div>
+            <a href="{% url 'instructor_detail' yoga_class.instructor.pk %}" style="font-size:0.8rem;color:var(--sage);">Full profile →</a>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- UPCOMING SESSIONS -->
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:1rem;">Upcoming Sessions</h3>
+        {% if sessions %}
+        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2.5rem;">
+          {% for session in sessions %}
+          <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:white;border:1px solid var(--border);border-radius:4px;transition:all 0.2s;">
+            <div style="text-align:center;min-width:50px;">
+              <div style="font-size:0.7rem;text-transform:uppercase;color:var(--soft-grey);">{{ session.date|date:"M" }}</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;line-height:1;">{{ session.date|date:"j" }}</div>
+              <div style="font-size:0.7rem;color:var(--soft-grey);">{{ session.date|date:"D" }}</div>
+            </div>
+            <div style="width:1px;height:40px;background:var(--border);"></div>
+            <div style="flex:1;">
+              <div style="font-weight:500;font-size:0.9rem;">{{ session.start_time|time:"g:i A" }} – {{ session.end_time|time:"g:i A" }}</div>
+              {% if session.notes %}<div style="font-size:0.8rem;color:var(--soft-grey);">📢 {{ session.notes }}</div>{% endif %}
+            </div>
+            <div style="text-align:right;">
+              {% if session.is_unavailable %}
+                <span class="avail-badge avail-unavailable" style="font-size:0.72rem;"><span class="avail-dot dot-unavailable"></span>Not Available</span>
+              {% else %}
+              <div style="font-size:0.8rem;margin-bottom:0.3rem;" class="{% if session.is_full %}spots-full-text{% elif session.is_low_spots %}spots-low-text{% else %}spots-ok-text{% endif %}">
+                {% if session.is_full %}Full{% elif session.is_low_spots %}⚡ {{ session.spots_remaining }} left{% else %}{{ session.spots_remaining }} spots{% endif %}
+              </div>
+              {% if session.pk in user_booked_sessions %}
+                <span style="font-size:0.75rem;color:var(--sage);">✅ Booked</span>
+              {% elif session.pk in user_waitlist_sessions %}
+                <span style="font-size:0.75rem;color:var(--gold);">⏳ Waitlisted</span>
+              {% elif not session.is_full %}
+                <form method="post" action="{% url 'intake_form' session.pk %}">{% csrf_token %}<button type="submit" class="btn-primary" style="padding:0.35rem 0.75rem;font-size:0.72rem;display:flex;align-items:center;gap:0.3rem;">🛒 Add</button></form>
+              {% else %}
+                <a href="{% url 'session_detail' session.pk %}" style="font-size:0.75rem;color:var(--soft-grey);border:1px solid var(--border);padding:0.35rem 0.9rem;border-radius:2px;text-decoration:none;">Waitlist</a>
+              {% endif %}
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="background:var(--cream);border-radius:4px;padding:1.5rem;text-align:center;color:var(--soft-grey);margin-bottom:2rem;font-size:0.875rem;">
+          No upcoming sessions scheduled. <a href="{% url 'contact' %}" style="color:var(--sage);">Request a session</a>
+        </div>
+        {% endif %}
+
+        <!-- REVIEWS -->
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:1rem;">
+          Reviews
+          {% if yoga_class.avg_rating > 0 %}<span style="font-size:1rem;font-family:'Jost',sans-serif;color:var(--gold);"> ⭐ {{ yoga_class.avg_rating }} ({{ yoga_class.total_reviews }})</span>{% endif %}
+        </h3>
+
+        {% if review_form %}
+        <div style="background:var(--cream);border-radius:4px;padding:1.5rem;margin-bottom:1.5rem;">
+          <div style="font-size:0.85rem;font-weight:500;margin-bottom:1rem;">Leave a Review</div>
+          <form method="post" action="{% url 'submit_review' yoga_class.pk %}">
+            {% csrf_token %}
+            <div style="margin-bottom:1rem;">
+              <div style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--soft-grey);margin-bottom:0.5rem">Rating</div>
+              <div class="stars" id="starRating">{% for i in "12345" %}<span class="star" data-val="{{ forloop.counter }}">★</span>{% endfor %}</div>
+              <input type="hidden" name="rating" id="ratingInput" value="0">
+            </div>
+            <textarea name="comment" class="form-input" rows="3" placeholder="Share your experience..." required></textarea>
+            <button type="submit" class="btn-primary" style="margin-top:0.75rem;" id="reviewBtn" disabled>Submit Review</button>
+          </form>
+        </div>
+        {% elif user_review %}<div style="background:#e8f5e9;border-radius:4px;padding:0.75rem 1rem;margin-bottom:1.5rem;font-size:0.875rem;color:#2e7d32;">✅ You've reviewed this class.</div>
+        {% elif not user.is_authenticated %}<div style="background:var(--cream);border-radius:4px;padding:0.75rem 1rem;margin-bottom:1.5rem;font-size:0.875rem;color:var(--soft-grey);"><a href="{% url 'login' %}" style="color:var(--sage)">Log in</a> to leave a review.</div>
+        {% endif %}
+
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+          {% for review in reviews %}
+          <div class="review-card" id="review-{{ review.pk }}">
+            <!-- Review Header -->
+            <div class="review-header">
+              <div>
+                <div class="reviewer-name">{{ review.user.get_full_name|default:review.user.username }}</div>
+                <div class="reviewer-date">{{ review.created_at|date:"M j, Y" }}</div>
+              </div>
+              <div style="color:var(--gold)">{% for i in "12345" %}{% if forloop.counter|lte:review.rating %}⭐{% endif %}{% endfor %}</div>
+            </div>
+
+            <!-- Review Comment -->
+            <p class="review-comment">{{ review.comment }}</p>
+
+            <!-- Owner Reply (if exists) -->
+            {% if review.owner_reply %}
+            <div style="margin-top:1rem;padding:0.9rem 1rem;background:rgba(122,158,126,0.08);border-left:3px solid var(--sage);border-radius:0 4px 4px 0;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+                <div style="font-size:0.75rem;font-weight:600;color:var(--sage);letter-spacing:0.05em;">🌿 Studio Response</div>
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                  <span style="font-size:0.72rem;color:var(--soft-grey);">{{ review.owner_reply_at|date:"M j, Y" }}</span>
+                  {% if user.is_staff %}
+                  <button onclick="toggleEditReply({{ review.pk }})"
+                    style="background:none;border:none;font-size:0.72rem;color:var(--sage);cursor:pointer;text-decoration:underline;">Edit</button>
+                  <form method="post" action="{% url 'delete_reply' review.pk %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" onclick="return confirm('Delete this reply?')"
+                      style="background:none;border:none;font-size:0.72rem;color:#c62828;cursor:pointer;text-decoration:underline;">Delete</button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+              <p style="font-size:0.875rem;color:var(--charcoal);line-height:1.7;margin:0;">{{ review.owner_reply }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Reply Form (staff only, toggled) -->
+            {% if user.is_staff %}
+            <div id="reply-form-{{ review.pk }}" style="margin-top:0.75rem;{% if review.owner_reply %}display:none;{% endif %}">
+              <form method="post" action="{% url 'reply_review' review.pk %}">
+                {% csrf_token %}
+                <div style="display:flex;gap:0.5rem;align-items:flex-end;">
+                  <textarea name="reply" rows="2"
+                    style="flex:1;padding:0.6rem 0.8rem;border:1px solid var(--border);border-radius:4px;font-family:inherit;font-size:0.85rem;resize:vertical;"
+                    placeholder="Reply as Sirius Yoga…">{% if review.owner_reply %}{{ review.owner_reply }}{% endif %}</textarea>
+                  <button type="submit" class="btn-primary"
+                    style="padding:0.55rem 1rem;font-size:0.8rem;white-space:nowrap;">
+                    {% if review.owner_reply %}Update{% else %}Reply{% endif %}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {% if not review.owner_reply %}
+            <button onclick="toggleEditReply({{ review.pk }})"
+              style="margin-top:0.6rem;background:none;border:1px dashed var(--border);padding:0.4rem 0.9rem;border-radius:4px;font-size:0.78rem;color:var(--soft-grey);cursor:pointer;">
+              + Reply as Studio
+            </button>
+            {% endif %}
+            {% endif %}
+          </div>
+          {% empty %}
+          <p style="color:var(--soft-grey);text-align:center;padding:2rem">No reviews yet. Be the first!</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="detail-sidebar">
+        <div class="booking-widget">
+          <div style="font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--soft-grey);">Per Session</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:500;margin-bottom:1.5rem;">A${{ yoga_class.price }}</div>
+          {% if sessions %}
+          <a href="{% url 'class_booking_page' yoga_class.slug %}" class="btn-primary btn-full" style="text-align:center;display:block;margin-bottom:0.75rem;">
+            {% if sessions.0.is_full %}Join Waitlist{% else %}🛒 Book & Add to Cart{% endif %}
+          </a>
+          {% endif %}
+          <a href="{% url 'pricing' %}" style="display:block;text-align:center;font-size:0.8rem;color:var(--sage);margin-top:0.5rem;">🎫 View passes & memberships</a>
+          <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:0.8rem;color:var(--soft-grey);display:flex;flex-direction:column;gap:0.4rem;">
+            <div>✅ Cancel {{ yoga_class.cancellation_hours }}h before</div>
+            <div>🎫 Membership passes accepted</div>
+            <div>🔒 Secure payment</div>
+            <div>📧 Email confirmation</div>
+          </div>
+        </div>
+
+        <!-- Related Classes -->
+        {% if related_classes %}
+        <div style="margin-top:1.5rem;background:white;border:1px solid var(--border);border-radius:4px;padding:1.25rem;">
+          <div style="font-size:0.8rem;font-weight:500;margin-bottom:1rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--soft-grey);">Similar Classes</div>
+          {% for rc in related_classes %}
+          <a href="{% url 'class_detail' rc.pk %}" style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;text-decoration:none;color:inherit;border-bottom:1px solid var(--border);">
+            <div style="width:36px;height:36px;background:var(--cream);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem;">🧘</div>
+            <div style="flex:1;min-width:0;"><div style="font-size:0.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ rc.name }}</div><div style="font-size:0.75rem;color:var(--soft-grey);">A${{ rc.price }}</div></div>
+          </a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+const stars = document.querySelectorAll('.star');
+const ratingInput = document.getElementById('ratingInput');
+const reviewBtn = document.getElementById('reviewBtn');
+stars.forEach(s => {
+  s.addEventListener('mouseover', () => { stars.forEach((st,i) => st.classList.toggle('active', i<=parseInt(s.dataset.val)-1)); });
+  s.addEventListener('click', () => {
+    const val = parseInt(s.dataset.val); ratingInput.value = val;
+    stars.forEach((st,i) => st.classList.toggle('filled', i<val));
+    if(reviewBtn) reviewBtn.disabled = false;
+  });
+});
+function toggleEditReply(reviewId) {
+  const form = document.getElementById('reply-form-' + reviewId);
+  if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+document.querySelector('.stars')?.addEventListener('mouseleave', () => { stars.forEach((st,i) => st.classList.toggle('active', i<parseInt(ratingInput.value))); });
+</script>
+{% endblock %}
